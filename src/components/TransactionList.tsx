@@ -1,9 +1,9 @@
-import { Transaction } from "@/types/database";
+import { TransactionWithCategory } from "@/types/database";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { DeleteTransactionButton } from "./DeleteTransactionButton";
 
 interface TransactionListProps {
-  readonly transactions: Transaction[];
+  readonly transactions: TransactionWithCategory[];
 }
 
 export function TransactionList({ transactions }: TransactionListProps) {
@@ -46,9 +46,18 @@ export function TransactionList({ transactions }: TransactionListProps) {
                 {formatDate(transaction.date)}
               </td>
               <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
-                <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
-                  {transaction.category}
-                </span>
+                {transaction.categories ? (
+                  <span
+                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                    style={{ backgroundColor: transaction.categories.color }}
+                  >
+                    {transaction.categories.name}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
+                    Uncategorized
+                  </span>
+                )}
               </td>
               <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                 {transaction.description || "—"}

@@ -2,6 +2,29 @@
 You are building "Budget Buddy," a personal finance tracker.
 You are a Senior Frontend Engineer specializing in Next.js 14+, TypeScript, and Supabase.
 
+# Agent Guidelines
+
+These rules apply to all AI agents working on this project:
+
+## Documentation & File Organization
+1. **No .md files in root** - Keep root clean. Only CONTEXT.md and README.md allowed
+2. **Use temp/ folder** - Put all temporary docs, instructions, and notes in `temp/`
+3. **Cleanup after yourself** - Remove outdated files, consolidate fragmented docs
+4. **No clutter** - Don't create multiple instruction files for a single feature
+
+## Supabase SQL Files
+1. **Self-contained files** - Each .sql file should be complete and runnable independently
+2. **One file per logical feature** - Don't split a feature across multiple files
+3. **Numbered ordering** - Use `01_`, `02_`, etc. if execution order matters
+4. **Simple instructions** - Just tell the user "Execute this SQL file" - don't over-explain
+5. **Keep folder organized** - Consolidate the supabase/ folder as if for first-time setup
+
+## Communication
+- Be concise in instructions
+- Don't create elaborate setup scripts unless requested
+- Trust the developer to know how to execute SQL files
+- Focus on code quality over documentation quantity
+
 # Tech Stack Rules
 1. **Framework:** Next.js (App Router). Do NOT use the old `pages/` directory.
 2. **Data Fetching:** Use Server Actions for all mutations (create, update, delete). Use Server Components for data fetching.
@@ -48,20 +71,46 @@ We are building the core transaction management features.
    - Using `supabaseAdmin` (service role key) in Server Actions to bypass RLS during development
    - Service role key added to `.env.local` (must be obtained from Supabase Dashboard)
 
+✅ RLS Error Fixed:
+   - Using `supabaseAdmin` (service role key) in Server Actions to bypass RLS during development
+   - Service role key added to `.env.local` (must be obtained from Supabase Dashboard)
+✅ Categories Feature:
+   - Created `categories` table with RLS policies
+   - Categories have: id, name, category_type (income/expense), color, user_id
+   - Color palettes: 6 green-ish colors for income, 26 varied colors for expenses
+   - Category limits enforced: max 6 income categories, max 26 expense categories
+   - Server Actions: `getCategories()`, `getCategoriesByType()`, `createCategory()` in `src/app/actions/category-actions.ts`
+   - Updated `Transaction` type to include `category_id` foreign key (legacy `category` field kept for migration)
+   - Added `TransactionWithCategory` type for joined queries
+   - Updated `getTransactions()` to join with categories table
+   - Updated `addTransaction()` to use `category_id`
+   - Updated `TransactionList` component to display categories with colors
+   - Updated `AddTransactionForm` to allow selecting existing categories or creating new ones on the fly
+   - Category selector shows colored badges for quick selection
+   - Form validates category limits and shows helpful error messages
+
 ## Next Steps
 
-1. Categories!
+1. **Dashboard Summary**
+   Create a dashboard summary component that shows:
+   - Total income vs expenses for current month
+   - Category breakdown (pie/bar chart)
+   - Recent transactions summary
+   - Balance trends
 
-Categories are no longer a simple string.
-We need to create a `categories` table in Supabase and link it to transactions via a foreign key.
-This will allow users to manage their categories and ensure data integrity.
+2. **Category Management UI**
+   Create a dedicated page for managing categories:
+   - View all categories with their colors
+   - Edit category names
+   - Delete categories (with confirmation)
+   - Reassign transactions when deleting a category
 
-We can start simple for now, a category just has an `id`, `name`, `category_type` (income/expense), and `user_id` and a `color` (for UI purposes). We can expand this later with features like icons, budgets, etc.
-For now, we will manage categories through the AddTransactionForm (users can select from existing categories or add a new one on the fly). We will implement a full category management UI in a future iteration.
-The color field will be unique between categories of the same user. This will allow us to easily assign colors to categories in the UI without conflicts. To ensure colors are good-looking and distinct, we will start with a predefined set of 32 colors and assign them at random as new categories are created.
-If a user tries to create more than 32 categories, we will show an error message asking them to delete some old categories first (or we can implement a color reuse strategy in the future). This approach keeps things simple while ensuring a good user experience.
-To make sure green-ish colors are used for income categories, we will allow for up-to 6 income categories (with green-ish colors) and up-to 26 expense categories with the rest of the color palette. This way we can ensure a good visual distinction between income and expense categories in the UI. We will enforce this limit in the Server Action that creates categories, returning an error if the user tries to exceed these limits.
-So we will have 2 color palettes, a 6-color palette for income categories and a 26-color palette for expense categories. When a new category is created, we will check the type (income/expense) and assign a random color from the appropriate palette, ensuring that the color is not already in use by another category of the same user. Once all colors of a category type are used, we will return an error message asking the user to delete some old categories before creating new ones. For now, we will omit the delete functionality for categories to keep things simple.
+3. **User Authentication**
+   Implement proper authentication:
+   - Sign up / Sign in with Supabase Auth
+   - Remove DEV_CONFIG and use actual auth.uid()
+   - Protect routes
+   - Add user profile management
 
 
 

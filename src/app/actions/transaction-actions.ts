@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { DEV_CONFIG } from "@/lib/dev-config";
-import { Transaction, TransactionInsert } from "@/types/database";
+import { TransactionInsert, TransactionWithCategory } from "@/types/database";
 
 interface GetTransactionsResult {
   success: boolean;
-  data?: Transaction[];
+  data?: TransactionWithCategory[];
   error?: string;
 }
 
@@ -20,7 +20,7 @@ export async function getTransactions(): Promise<GetTransactionsResult> {
   try {
     const { data, error } = await supabase
       .from("transactions")
-      .select("*")
+      .select("*, categories(*)")
       .eq("user_id", DEV_CONFIG.DEV_USER_ID)
       .order("date", { ascending: false })
       .limit(20);
@@ -29,7 +29,7 @@ export async function getTransactions(): Promise<GetTransactionsResult> {
       return { success: false, error: error.message };
     }
 
-    return { success: true, data: data as Transaction[] };
+    return { success: true, data: data as TransactionWithCategory[] };
   } catch (error) {
     return {
       success: false,
@@ -51,7 +51,7 @@ export async function addTransaction(
       return { success: false, error: "Invalid transaction type" };
     }
 
-    if (!transaction.category || transaction.category.trim() === "") {
+    if (!transaction.category_id || transaction.category_id.trim() === "") {
       return { success: false, error: "Category is required" };
     }
 
@@ -63,7 +63,7 @@ export async function addTransaction(
     const { error } = await supabase.from("transactions").insert({
       amount: transaction.amount,
       type: transaction.type,
-      category: transaction.category.trim(),
+      category_id: transaction.category_id,
       description: transaction.description?.trim() || null,
       date: transaction.date,
       user_id: DEV_CONFIG.DEV_USER_ID, // Dev user until auth is implemented

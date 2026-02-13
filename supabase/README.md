@@ -1,76 +1,81 @@
-# Running SQL Scripts via IntelliJ
+# Supabase Database Setup
 
-## How to Run the Scripts
+This folder contains SQL scripts to set up the Budget Buddy database.
 
-1. **Open Database Tool Window** in IntelliJ
-2. **Connect to Supabase** using your connection string
-3. **Open the SQL file**: `supabase/complete_dev_setup.sql`
-4. **Run the entire script**
+## Quick Start (First Time Setup)
 
-## What to Run
+Run these scripts **in order** via the Supabase SQL Editor:
 
-### Primary Script: `complete_dev_setup.sql`
-
-This script will:
-- ✅ Create dev user with UUID `00000000-0000-0000-0000-000000000000`
-- ✅ Configure user_id column as NOT NULL
-- ✅ Drop all old RLS policies
-- ✅ Create new dev-friendly RLS policies (that check `user_id` column, not `auth.uid()`)
-- ✅ Verify everything is set up correctly
-
-### Expected Output
-
-You should see output like:
+### 1. Initial Schema
 ```
-NOTICE: Dev user created (or already exists)
-NOTICE: user_id column configured as NOT NULL
-NOTICE: Dev users found: 1
-NOTICE: RLS enabled on transactions: true
-NOTICE: RLS policies on transactions: 4
+File: 01_initial_schema.sql
+```
+Creates all tables, indexes, and RLS policies.
 
-component    | status
--------------|-----------
-Dev User     | ✅ Created
-RLS Enabled  | ✅ Yes
-RLS Policies | 4 policies
+**Note**: All scripts are idempotent and can be safely run multiple times. Existing data will be preserved.
+
+### 2. Development Setup (Optional)
+```
+File: 02_dev_setup.sql
+```
+Creates a test user and disables RLS for easier development.
+
+⚠️ **Development only** - skip this in production.
+
+### 3. Restore RLS (When Ready for Production)
+```
+File: 03_restore_rls.sql
+```
+Re-enables RLS when you implement proper authentication.
+
+## How to Execute
+
+1. Go to your Supabase project dashboard
+2. Navigate to **SQL Editor**
+3. Copy the contents of each file
+4. Paste and execute in order
+5. Verify tables were created in **Table Editor**
+
+## Database Schema
+
+### Tables
+
+**categories**
+- User-defined categories with colors
+- Linked to auth.users via user_id
+- Unique names and colors per user
+- Max 6 income categories (green palette)
+- Max 26 expense categories (varied palette)
+
+**transactions**
+- Financial transactions (income/expenses)
+- Linked to categories via category_id
+- Linked to auth.users via user_id
+
+### Security
+
+All tables use Row Level Security (RLS) to ensure users can only access their own data.
+
+RLS is **disabled** in development mode (02_dev_setup.sql) and **re-enabled** for production (03_restore_rls.sql).
+
+## Dev User Details
+
+The dev user created by `02_dev_setup.sql`:
+- **UUID**: `00000000-0000-0000-0000-000000000001`
+- **Email**: `dev@budgetbuddy.local`
+- **Password**: `devpassword123`
+
+This is already configured in `src/lib/dev-config.ts`.
+
+## After Running the Scripts
+
+Start the dev server:
+```bash
+npm run dev
 ```
 
-### About the Warning
-
-The warning you saw:
-```
-[2026-02-13 17:49:42] Unsafe query: 'Update' statement does nothing because 'where' condition is always false
-```
-
-**This is OK!** It means there are no NULL `user_id` values to update (which is expected). The script is designed to handle both cases safely.
-
-## After Running the Script
-
-1. **Restart your dev server** (if running):
-   ```bash
-   npm run dev
-   ```
-
-2. **Test adding a transaction** - it should work now! ✅
-
-## What the Fix Does
-
-The new RLS policies check:
-```sql
--- OLD (doesn't work - auth.uid() is NULL when not authenticated)
-USING (auth.uid() = user_id)
-
--- NEW (works - checks the actual user_id value)
-USING (user_id = '00000000-0000-0000-0000-000000000000')
-```
-
-This allows your Server Actions to insert/update/delete transactions for the dev user without requiring an authentication session.
-
-## Troubleshooting
-
-If you still get RLS errors after running the script:
-1. Verify the script completed successfully (check for errors in IntelliJ output)
-2. Confirm 4 policies were created (should see "4 policies" in output)
-3. Restart your dev server
-4. Check browser console for any other errors
-
+Test the app:
+- Open http://localhost:3000
+- Add a transaction
+- Create categories
+- See colored categories in the list
