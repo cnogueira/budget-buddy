@@ -59,7 +59,12 @@ export async function getTransactions(): Promise<GetTransactionsResult> {
       return { success: false, error: error.message };
     }
 
-    return { success: true, data: data as TransactionWithCategory[] };
+    const normalizedData = (data || []).map((t: any) => ({
+      ...t,
+      categories: Array.isArray(t.categories) ? t.categories[0] : t.categories,
+    }));
+
+    return { success: true, data: normalizedData as TransactionWithCategory[] };
   } catch (error) {
     return {
       success: false,
@@ -191,6 +196,11 @@ export async function getDashboardSummary(): Promise<GetDashboardSummaryResult> 
     const categoryBreakdown = buildCategoryBreakdown(monthTransactions || []);
     const monthlyTrends = buildMonthlyTrends(trendTransactions || [], now);
 
+    const normalizedRecentTransactions = (recentTransactions || []).map((t: any) => ({
+      ...t,
+      categories: Array.isArray(t.categories) ? t.categories[0] : t.categories,
+    }));
+
     return {
       success: true,
       data: {
@@ -198,7 +208,7 @@ export async function getDashboardSummary(): Promise<GetDashboardSummaryResult> 
         monthExpenseTotal: totals.expense,
         monthNet: totals.income - totals.expense,
         categoryBreakdown,
-        recentTransactions: (recentTransactions || []) as TransactionWithCategory[],
+        recentTransactions: normalizedRecentTransactions as TransactionWithCategory[],
         monthlyTrends,
       },
     };
@@ -234,19 +244,21 @@ function calculateMonthTotals(
 }
 
 function buildCategoryBreakdown(
-  transactions: Array<{
-    amount: number;
-    type: TransactionType;
-    category_id: string | null;
-    categories: { name: string; color: string } | null;
-  }>
+  transactions: any[]
 ): CategoryBreakdownItem[] {
   const breakdownMap = new Map<string, CategoryBreakdownItem>();
 
   transactions.forEach((transaction) => {
     const id = transaction.category_id || "uncategorized";
-    const name = transaction.categories?.name || "Uncategorized";
-    const color = transaction.categories?.color || null;
+
+    // Supabase can return joined data as either a single object or an array of objects
+    // depending on the relationship configuration and environment.
+    const categoryData = Array.isArray(transaction.categories)
+      ? transaction.categories[0]
+      : transaction.categories;
+
+    const name = categoryData?.name || "Uncategorized";
+    const color = categoryData?.color || null;
 
     const existing = breakdownMap.get(id);
     if (existing) {
