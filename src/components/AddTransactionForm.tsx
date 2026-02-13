@@ -144,19 +144,43 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
 
           {/* Type */}
           <div>
-            <label htmlFor="type" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Type
             </label>
-            <select
-              id="type"
-              required
-              value={type}
-              onChange={(e) => setType(e.target.value as TransactionType)}
-              className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-zinc-500"
-            >
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-            </select>
+            <div className="mt-1 grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg relative">
+              <div
+                className={`absolute inset-y-1 w-[calc(50%-4px)] bg-white dark:bg-zinc-700 rounded-md shadow-sm transition-all duration-200 ease-in-out ${type === 'expense' ? 'translate-x-0' : 'translate-x-full'
+                  }`}
+              />
+              <label
+                className={`relative flex items-center justify-center py-2 text-sm font-medium cursor-pointer transition-colors duration-200 z-10 ${type === 'expense' ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'
+                  }`}
+              >
+                <input
+                  type="radio"
+                  name="transactionType"
+                  value="expense"
+                  checked={type === 'expense'}
+                  onChange={() => setType('expense')}
+                  className="sr-only"
+                />
+                Expense
+              </label>
+              <label
+                className={`relative flex items-center justify-center py-2 text-sm font-medium cursor-pointer transition-colors duration-200 z-10 ${type === 'income' ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'
+                  }`}
+              >
+                <input
+                  type="radio"
+                  name="transactionType"
+                  value="income"
+                  checked={type === 'income'}
+                  onChange={() => setType('income')}
+                  className="sr-only"
+                />
+                Income
+              </label>
+            </div>
           </div>
 
           {/* Category */}
@@ -283,8 +307,8 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
           {message && (
             <div
               className={`text-sm font-medium ${message.type === "success"
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
+                ? "text-green-600 dark:text-green-400"
+                : "text-red-600 dark:text-red-400"
                 }`}
             >
               {message.text}
