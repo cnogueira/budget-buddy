@@ -1,6 +1,7 @@
 import { getTransactions } from "@/app/actions/transaction-actions";
-import { TransactionList } from "@/components/TransactionList";
 import { AddTransactionForm } from "@/components/AddTransactionForm";
+import { DashboardSummary } from "@/components/DashboardSummary";
+import { TransactionList } from "@/components/TransactionList";
 
 export default async function Home() {
   const result = await getTransactions();
@@ -16,6 +17,8 @@ export default async function Home() {
             Track your income and expenses
           </p>
         </header>
+
+        <DashboardSummary />
 
         <section className="mb-8">
           <AddTransactionForm />
