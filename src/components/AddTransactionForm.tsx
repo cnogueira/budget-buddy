@@ -5,7 +5,11 @@ import { getCategoriesByType, createCategory } from "@/app/actions/category-acti
 import { TransactionType, Category } from "@/types/database";
 import { useState, useEffect } from "react";
 
-export function AddTransactionForm() {
+interface AddTransactionFormProps {
+  onSuccess?: () => void;
+}
+
+export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<TransactionType>("expense");
   const [categoryId, setCategoryId] = useState("");
@@ -102,6 +106,11 @@ export function AddTransactionForm() {
       setCategoryId("");
       setDescription("");
       setDate(getTodayDate());
+
+      // Notify parent of success
+      if (onSuccess) {
+        setTimeout(() => onSuccess(), 1500); // Small delay to show success message
+      }
     } else {
       setMessage({ type: "error", text: result.error || "Failed to add transaction" });
     }
@@ -111,10 +120,7 @@ export function AddTransactionForm() {
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-      <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-        Add Transaction
-      </h3>
+    <div className="bg-white dark:bg-zinc-950">
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -221,9 +227,8 @@ export function AddTransactionForm() {
                     key={cat.id}
                     type="button"
                     onClick={() => setCategoryId(cat.id)}
-                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-white transition-opacity ${
-                      categoryId === cat.id ? "ring-2 ring-offset-2 ring-zinc-900 dark:ring-zinc-50" : "opacity-70 hover:opacity-100"
-                    }`}
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-white transition-opacity ${categoryId === cat.id ? "ring-2 ring-offset-2 ring-zinc-900 dark:ring-zinc-50" : "opacity-70 hover:opacity-100"
+                      }`}
                     style={{ backgroundColor: cat.color }}
                   >
                     {cat.name}
@@ -277,11 +282,10 @@ export function AddTransactionForm() {
           {/* Success/Error Message */}
           {message && (
             <div
-              className={`text-sm font-medium ${
-                message.type === "success"
+              className={`text-sm font-medium ${message.type === "success"
                   ? "text-green-600 dark:text-green-400"
                   : "text-red-600 dark:text-red-400"
-              }`}
+                }`}
             >
               {message.text}
             </div>

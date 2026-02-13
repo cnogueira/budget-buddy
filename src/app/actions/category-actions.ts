@@ -19,55 +19,55 @@ interface CreateCategoryResult {
 
 // Color palettes
 const INCOME_COLORS = [
-    "#0d9488", // teal-600
-    "#86efac", // green-300
-    "#22c55e", // green-500
-    "#84cc16", // lime-500
-    "#15803d", // green-700
-    "#052e16", // green-950
+  "#0d9488", // teal-600
+  "#86efac", // green-300
+  "#22c55e", // green-500
+  "#84cc16", // lime-500
+  "#15803d", // green-700
+  "#052e16", // green-950
 ];
 
 const EXPENSE_COLORS = [
-    // Neutrals (high separation anchors)
-    "#000000", // black
-    "#ffffff", // white
-    "#111827", // near-black (slate-900)
-    "#d1d5db", // light gray (gray-300)
+  // Neutrals (high separation anchors)
+  "#000000", // black
+  "#ffffff", // white
+  "#111827", // near-black (slate-900)
+  "#d1d5db", // light gray (gray-300)
 
-    // Reds / warm
-    "#7f1d1d", // deep red
-    "#ef4444", // red
-    "#fb7185", // coral / salmon
-    "#be123c", // raspberry (dark rose)
+  // Reds / warm
+  "#7f1d1d", // deep red
+  "#ef4444", // red
+  "#fb7185", // coral / salmon
+  "#be123c", // raspberry (dark rose)
 
-    // Oranges / yellows (spaced by lightness + warmth)
-    "#c2410c", // burnt orange
-    "#f97316", // orange
-    "#f59e0b", // amber / gold
-    "#fde047", // bright yellow
-    "#a16207", // mustard / ochre
+  // Oranges / yellows (spaced by lightness + warmth)
+  "#c2410c", // burnt orange
+  "#f97316", // orange
+  "#f59e0b", // amber / gold
+  "#fde047", // bright yellow
+  "#a16207", // mustard / ochre
 
-    // Browns / tans (non-green earthy separation)
-    "#7c2d12", // deep brown
-    "#9a3412", // rust
-    "#e0c097", // tan / sand
-    "#fed7aa", // peach
+  // Browns / tans (non-green earthy separation)
+  "#7c2d12", // deep brown
+  "#9a3412", // rust
+  "#e0c097", // tan / sand
+  "#fed7aa", // peach
 
-    // Pinks / magentas / purples (varied intensity)
-    "#ec4899", // hot pink
-    "#ff00ff", // pure magenta
-    "#d946ef", // fuchsia
-    "#a21caf", // deep fuchsia
-    "#7e22ce", // purple
-    "#581c87", // deep purple
-    "#7c3aed", // violet
-    "#c4b5fd", // lavender (light violet)
+  // Pinks / magentas / purples (varied intensity)
+  "#ec4899", // hot pink
+  "#ff00ff", // pure magenta
+  "#d946ef", // fuchsia
+  "#a21caf", // deep fuchsia
+  "#7e22ce", // purple
+  "#581c87", // deep purple
+  "#7c3aed", // violet
+  "#c4b5fd", // lavender (light violet)
 
-    // Blues (kept “blue”, not cyan/teal)
-    "#1e3a8a", // navy
-    "#2563eb", // blue
-    "#60a5fa", // light blue
-    "#a5b4fc", // periwinkle (indigo-200)
+  // Blues (kept “blue”, not cyan/teal)
+  "#1e3a8a", // navy
+  "#2563eb", // blue
+  "#60a5fa", // light blue
+  "#a5b4fc", // periwinkle (indigo-200)
 ];
 
 
@@ -159,7 +159,7 @@ export async function createCategory(
     // Get available colors for this category type
     const colorPalette =
       category.category_type === "income" ? INCOME_COLORS : EXPENSE_COLORS;
-    const usedColors = new Set(existingCategories?.map((c) => c.color) || []);
+    const usedColors = new Set(existingCategories?.map((c: { color: string }) => c.color) || []);
     const availableColors = colorPalette.filter((color) => !usedColors.has(color));
 
     if (availableColors.length === 0) {

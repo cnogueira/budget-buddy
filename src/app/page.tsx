@@ -1,5 +1,5 @@
 import { getTransactions } from "@/app/actions/transaction-actions";
-import { AddTransactionForm } from "@/components/AddTransactionForm";
+import { AddTransactionButton } from "@/components/AddTransactionButton";
 import { DashboardSummary } from "@/components/DashboardSummary";
 import { TransactionList } from "@/components/TransactionList";
 
@@ -20,14 +20,14 @@ export default async function Home() {
 
         <DashboardSummary />
 
-        <section className="mb-8">
-          <AddTransactionForm />
-        </section>
-
         <section>
-          <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-            Recent Transactions
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+              Recent Transactions
+            </h2>
+            <AddTransactionButton />
+          </div>
+
           {result.success && result.data ? (
             <TransactionList transactions={result.data} />
           ) : (
