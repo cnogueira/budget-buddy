@@ -1,9 +1,9 @@
 "use client";
 
 import { addTransaction } from "@/app/actions/transaction-actions";
-import { getCategoriesByType, createCategory } from "@/app/actions/category-actions";
+import { getCategories, createCategory } from "@/app/actions/category-actions";
 import { TransactionType, Category } from "@/types/database";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 interface AddTransactionFormProps {
   onSuccess?: () => void;
@@ -15,28 +15,36 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
   const [categoryId, setCategoryId] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(getTodayDate());
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Fetch categories when type changes
+  // Filter categories locally based on the selected type
+  const categories = useMemo(() => {
+    return allCategories.filter(cat => cat.category_type === type);
+  }, [allCategories, type]);
+
+  // Fetch all categories once when the form mounts
   useEffect(() => {
     async function loadCategories() {
       setIsLoadingCategories(true);
-      const result = await getCategoriesByType(type);
+      const result = await getCategories();
       if (result.success && result.data) {
-        setCategories(result.data);
-        // Reset category selection when type changes
-        setCategoryId("");
-        setIsCreatingCategory(false);
-        setNewCategoryName("");
+        setAllCategories(result.data);
       }
       setIsLoadingCategories(false);
     }
     loadCategories();
+  }, []);
+
+  // Reset category selection when type changes
+  useEffect(() => {
+    setCategoryId("");
+    setIsCreatingCategory(false);
+    setNewCategoryName("");
   }, [type]);
 
   async function handleCreateCategory() {
@@ -56,8 +64,8 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
     setIsSubmitting(false);
 
     if (result.success && result.data) {
-      // Add new category to list and select it
-      setCategories([...categories, result.data]);
+      // Add new category to allCategories list and select it
+      setAllCategories([...allCategories, result.data]);
       setCategoryId(result.data.id);
       setIsCreatingCategory(false);
       setNewCategoryName("");
@@ -150,8 +158,8 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
             <div className="mt-1 grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg relative">
               <div
                 className={`absolute inset-y-1 w-[calc(50%-4px)] rounded-md shadow-sm transition-all duration-300 ease-in-out ${type === 'expense'
-                    ? 'translate-x-0 bg-red-500 dark:bg-red-600'
-                    : 'translate-x-full bg-emerald-500 dark:bg-emerald-600'
+                  ? 'translate-x-0 bg-red-500 dark:bg-red-600'
+                  : 'translate-x-full bg-emerald-500 dark:bg-emerald-600'
                   }`}
               />
               <label
