@@ -149,11 +149,13 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
             </label>
             <div className="mt-1 grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg relative">
               <div
-                className={`absolute inset-y-1 w-[calc(50%-4px)] bg-white dark:bg-zinc-700 rounded-md shadow-sm transition-all duration-200 ease-in-out ${type === 'expense' ? 'translate-x-0' : 'translate-x-full'
+                className={`absolute inset-y-1 w-[calc(50%-4px)] rounded-md shadow-sm transition-all duration-300 ease-in-out ${type === 'expense'
+                    ? 'translate-x-0 bg-red-500 dark:bg-red-600'
+                    : 'translate-x-full bg-emerald-500 dark:bg-emerald-600'
                   }`}
               />
               <label
-                className={`relative flex items-center justify-center py-2 text-sm font-medium cursor-pointer transition-colors duration-200 z-10 ${type === 'expense' ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'
+                className={`relative flex items-center justify-center py-2 text-sm font-bold cursor-pointer transition-colors duration-300 z-10 ${type === 'expense' ? 'text-white' : 'text-zinc-500 dark:text-zinc-400'
                   }`}
               >
                 <input
@@ -167,7 +169,7 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                 Expense
               </label>
               <label
-                className={`relative flex items-center justify-center py-2 text-sm font-medium cursor-pointer transition-colors duration-200 z-10 ${type === 'income' ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'
+                className={`relative flex items-center justify-center py-2 text-sm font-bold cursor-pointer transition-colors duration-300 z-10 ${type === 'income' ? 'text-white' : 'text-zinc-500 dark:text-zinc-400'
                   }`}
               >
                 <input
@@ -185,17 +187,32 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
 
           {/* Category */}
           <div className="sm:col-span-2">
-            <label htmlFor="category" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Category
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Category
+              </label>
+              {!isCreatingCategory && (
+                <button
+                  type="button"
+                  onClick={() => setIsCreatingCategory(true)}
+                  className="text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 flex items-center gap-1 transition-colors"
+                >
+                  <span className="text-lg leading-none">+</span> New Category
+                </button>
+              )}
+            </div>
+
             {isLoadingCategories ? (
-              <div className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                Loading categories...
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-8 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-full" />
+                ))}
               </div>
             ) : isCreatingCategory ? (
-              <div className="mt-1 flex gap-2">
+              <div className="flex gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
                 <input
                   type="text"
+                  autoFocus
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500"
@@ -205,7 +222,7 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                   type="button"
                   onClick={handleCreateCategory}
                   disabled={isSubmitting || !newCategoryName.trim()}
-                  className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 disabled:opacity-50 transition-colors"
                 >
                   Create
                 </button>
@@ -215,49 +232,39 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                     setIsCreatingCategory(false);
                     setNewCategoryName("");
                   }}
-                  className="rounded-md bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                  className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                 >
                   Cancel
                 </button>
               </div>
             ) : (
-              <div className="mt-1 flex gap-2">
-                <select
-                  id="category"
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-zinc-500"
-                >
-                  <option value="">Select a category...</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
+              <div className="flex flex-wrap gap-2 animate-in fade-in duration-300">
+                {categories.length > 0 ? (
+                  categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setCategoryId(cat.id)}
+                      className={`group relative flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-200 ${categoryId === cat.id
+                        ? "ring-2 ring-offset-2 ring-zinc-900 dark:ring-zinc-50 dark:ring-offset-zinc-950 scale-105"
+                        : "bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
+                        }`}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: cat.color }}
+                      />
                       {cat.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setIsCreatingCategory(true)}
-                  className="whitespace-nowrap rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-                >
-                  + New
-                </button>
-              </div>
-            )}
-            {categories.length > 0 && !isCreatingCategory && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setCategoryId(cat.id)}
-                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-white transition-opacity ${categoryId === cat.id ? "ring-2 ring-offset-2 ring-zinc-900 dark:ring-zinc-50" : "opacity-70 hover:opacity-100"
-                      }`}
-                    style={{ backgroundColor: cat.color }}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
+                      {categoryId === cat.id && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-zinc-900 text-[10px] text-white ring-2 ring-white dark:bg-zinc-50 dark:text-zinc-900 dark:ring-zinc-950">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-sm text-zinc-500 italic">No categories found. Create one to get started.</p>
+                )}
               </div>
             )}
           </div>
