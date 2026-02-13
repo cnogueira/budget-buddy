@@ -1,5 +1,6 @@
 import { Transaction } from "@/types/database";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { DeleteTransactionButton } from "./DeleteTransactionButton";
 
 interface TransactionListProps {
   readonly transactions: Transaction[];
@@ -69,6 +70,9 @@ export function TransactionList({ transactions }: TransactionListProps) {
                   {transaction.amount.toFixed(2)}
                 </span>
               </td>
+              <td className="px-4 py-3 text-right">
+                <DeleteTransactionButton id={transaction.id} />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -85,5 +89,3 @@ function formatDate(dateString: string): string {
     year: "numeric",
   });
 }
-
-

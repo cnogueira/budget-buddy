@@ -25,23 +25,44 @@ We are building the core transaction management features.
 
 ## Completed
 ✅ Supabase client initialized in `src/lib/supabase.ts`
-✅ Database schema deployed to Supabase
+   - Two clients: `supabase` (anon key, respects RLS) and `supabaseAdmin` (service role, bypasses RLS)
+   - Admin client used in Server Actions for development (until auth is implemented)
+✅ Database schema deployed to Supabase with RLS policies
 ✅ Transaction List feature:
    - Server Action: `getTransactions()` in `src/app/actions/transaction-actions.ts`
    - UI Component: `TransactionList` in `src/components/TransactionList.tsx`
    - Home page displays recent transactions with proper error handling
+✅ Add Transaction feature:
+   - Server Action: `addTransaction()` in `src/app/actions/transaction-actions.ts` with validation
+   - UI Component: `AddTransactionForm` in `src/components/AddTransactionForm.tsx`
+   - Form includes: amount, type (income/expense), category, description (optional), and date
+   - Success/error feedback shown to user
+   - Page revalidates after adding transaction
+✅ Delete Transaction feature:
+   - Server Action: `deleteTransaction(id)` in `src/app/actions/transaction-actions.ts`
+   - UI Component: `DeleteTransactionButton` in `src/components/DeleteTransactionButton.tsx`
+   - Delete button added to each row in TransactionList
+   - Confirmation dialog before deletion
+   - Page revalidates after deletion to refresh the list
+✅ RLS Error Fixed:
+   - Using `supabaseAdmin` (service role key) in Server Actions to bypass RLS during development
+   - Service role key added to `.env.local` (must be obtained from Supabase Dashboard)
 
 ## Next Steps
-Implement Add and Delete transaction features:
-1. **Add Transaction Feature:**
-   - Create a Server Action `addTransaction()` that validates and inserts a new transaction
-   - Create a form component `AddTransactionForm.tsx` with fields: amount, type (income/expense), category, description (optional), and date
-   - Add the form to the home page above the transaction list
-   - Use proper validation (e.g., amount > 0, required fields)
-   - Show success/error feedback to the user
 
-2. **Delete Transaction Feature:**
-   - Create a Server Action `deleteTransaction(id)` that removes a transaction
-   - Add a delete button to each row in the TransactionList
-   - Add confirmation before deletion (use a client component for the delete button)
-   - Revalidate the page after deletion to refresh the list
+1. Categories!
+
+Categories are no longer a simple string.
+We need to create a `categories` table in Supabase and link it to transactions via a foreign key.
+This will allow users to manage their categories and ensure data integrity.
+
+We can start simple for now, a category just has an `id`, `name`, `category_type` (income/expense), and `user_id` and a `color` (for UI purposes). We can expand this later with features like icons, budgets, etc.
+For now, we will manage categories through the AddTransactionForm (users can select from existing categories or add a new one on the fly). We will implement a full category management UI in a future iteration.
+The color field will be unique between categories of the same user. This will allow us to easily assign colors to categories in the UI without conflicts. To ensure colors are good-looking and distinct, we will start with a predefined set of 32 colors and assign them at random as new categories are created.
+If a user tries to create more than 32 categories, we will show an error message asking them to delete some old categories first (or we can implement a color reuse strategy in the future). This approach keeps things simple while ensuring a good user experience.
+To make sure green-ish colors are used for income categories, we will allow for up-to 6 income categories (with green-ish colors) and up-to 26 expense categories with the rest of the color palette. This way we can ensure a good visual distinction between income and expense categories in the UI. We will enforce this limit in the Server Action that creates categories, returning an error if the user tries to exceed these limits.
+So we will have 2 color palettes, a 6-color palette for income categories and a 26-color palette for expense categories. When a new category is created, we will check the type (income/expense) and assign a random color from the appropriate palette, ensuring that the color is not already in use by another category of the same user. Once all colors of a category type are used, we will return an error message asking the user to delete some old categories before creating new ones. For now, we will omit the delete functionality for categories to keep things simple.
+
+
+
+
