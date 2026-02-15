@@ -20,7 +20,7 @@ export function TransactionList({ transactions, categories }: TransactionListPro
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       <table className="w-full">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/50">
@@ -62,8 +62,8 @@ export function TransactionList({ transactions, categories }: TransactionListPro
               <td className="px-4 py-3 text-right">
                 <span
                   className={`inline-flex items-center gap-1 text-sm font-medium ${transaction.type === "income"
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-red-600 dark:text-red-400"
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
                     }`}
                 >
                   {transaction.type === "income" ? (

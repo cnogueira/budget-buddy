@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Category } from "@/types/database";
 import { updateTransactionCategory } from "@/app/actions/learning-actions";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
@@ -22,6 +22,8 @@ export function CategoryPicker({
 }: CategoryPickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [openUpward, setOpenUpward] = useState(false);
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
     async function handleSelect(categoryId: string) {
         if (categoryId === currentCategoryId) {
@@ -39,11 +41,22 @@ export function CategoryPicker({
         }
     }
 
+    const toggleDropdown = () => {
+        if (!isOpen && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            // Dropdown has max-h-60 (240px) + some margin
+            setOpenUpward(spaceBelow < 260);
+        }
+        setIsOpen(!isOpen);
+    };
+
     return (
         <div className="relative inline-block text-left">
             <button
+                ref={buttonRef}
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={toggleDropdown}
                 className={`inline-flex items-center gap-2 rounded-full px-2.5 py-0.5 text-xs font-medium transition-all ${isUpdating ? "opacity-50 cursor-not-allowed" : "hover:scale-105 active:scale-95"
                     }`}
                 style={{ backgroundColor: currentCategoryColor, color: '#fff' }}
@@ -60,7 +73,8 @@ export function CategoryPicker({
                         className="fixed inset-0 z-20"
                         onClick={() => setIsOpen(false)}
                     />
-                    <div className="absolute left-0 mt-2 w-48 origin-top-left rounded-md bg-white p-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-900 dark:ring-zinc-800 z-30 max-h-60 overflow-y-auto">
+                    <div className={`absolute left-0 w-48 rounded-md bg-white p-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-900 dark:ring-zinc-800 z-30 max-h-60 overflow-y-auto ${openUpward ? "bottom-full mb-2 origin-bottom-left" : "top-full mt-2 origin-top-left"
+                        }`}>
                         {categories.map((cat) => (
                             <button
                                 key={cat.id}
