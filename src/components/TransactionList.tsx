@@ -1,12 +1,14 @@
-import { TransactionWithCategory } from "@/types/database";
+import { TransactionWithCategory, Category } from "@/types/database";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { DeleteTransactionButton } from "./DeleteTransactionButton";
+import { CategoryPicker } from "./CategoryPicker";
 
 interface TransactionListProps {
   readonly transactions: TransactionWithCategory[];
+  readonly categories: Category[];
 }
 
-export function TransactionList({ transactions }: TransactionListProps) {
+export function TransactionList({ transactions, categories }: TransactionListProps) {
   if (transactions.length === 0) {
     return (
       <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
@@ -45,30 +47,24 @@ export function TransactionList({ transactions }: TransactionListProps) {
               <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
                 {formatDate(transaction.date)}
               </td>
-              <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
-                {transaction.categories ? (
-                  <span
-                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
-                    style={{ backgroundColor: transaction.categories.color }}
-                  >
-                    {transaction.categories.name}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
-                    Uncategorized
-                  </span>
-                )}
+              <td className="px-4 py-3 text-sm">
+                <CategoryPicker
+                  transactionId={transaction.id}
+                  currentCategoryId={transaction.categories?.id || null}
+                  currentCategoryName={transaction.categories?.name || "Uncategorized"}
+                  currentCategoryColor={transaction.categories?.color || "#9ca3af"}
+                  categories={categories.filter(c => c.category_type === transaction.type)}
+                />
               </td>
               <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                 {transaction.description || "—"}
               </td>
               <td className="px-4 py-3 text-right">
                 <span
-                  className={`inline-flex items-center gap-1 text-sm font-medium ${
-                    transaction.type === "income"
+                  className={`inline-flex items-center gap-1 text-sm font-medium ${transaction.type === "income"
                       ? "text-green-600 dark:text-green-400"
                       : "text-red-600 dark:text-red-400"
-                  }`}
+                    }`}
                 >
                   {transaction.type === "income" ? (
                     <ArrowUpCircle className="h-4 w-4" />

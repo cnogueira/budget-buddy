@@ -1,11 +1,18 @@
 import { getTransactions } from "@/app/actions/transaction-actions";
+import { getCategories } from "@/app/actions/category-actions";
 import { AddTransactionButton } from "@/components/AddTransactionButton";
 import { ImportTransactionsButton } from "@/components/ImportTransactionsButton";
 import { DashboardSummary } from "@/components/DashboardSummary";
 import { TransactionList } from "@/components/TransactionList";
 
 export default async function Home() {
-  const result = await getTransactions();
+  const [transactionResult, categoryResult] = await Promise.all([
+    getTransactions(),
+    getCategories(),
+  ]);
+
+  const transactions = transactionResult.success ? transactionResult.data || [] : [];
+  const categories = categoryResult.success ? categoryResult.data || [] : [];
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
@@ -32,11 +39,14 @@ export default async function Home() {
             </div>
           </div>
 
-          {result.success && result.data ? (
-            <TransactionList transactions={result.data} />
+          {transactionResult.success ? (
+            <TransactionList
+              transactions={transactions}
+              categories={categories}
+            />
           ) : (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-              <p>Failed to load transactions: {result.error}</p>
+              <p>Failed to load transactions: {transactionResult.error}</p>
             </div>
           )}
         </section>

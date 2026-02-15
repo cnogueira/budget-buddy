@@ -6,6 +6,8 @@ export interface Category {
     name: string;
     category_type: TransactionType;
     color: string; // hex color code
+    icon: string;  // Lucide icon name
+    parent_id: string | null;
     created_at: string;
 }
 
@@ -13,6 +15,8 @@ export interface CategoryInsert {
     name: string;
     category_type: TransactionType;
     color: string;
+    icon?: string;
+    parent_id?: string | null;
 }
 
 export interface Transaction {

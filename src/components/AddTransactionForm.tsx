@@ -4,6 +4,7 @@ import { addTransaction } from "@/app/actions/transaction-actions";
 import { getCategories, createCategory } from "@/app/actions/category-actions";
 import { TransactionType, Category } from "@/types/database";
 import { useState, useEffect, useMemo } from "react";
+import { CategorySelector } from "./CategorySelector";
 
 interface AddTransactionFormProps {
   onSuccess?: () => void;
@@ -210,70 +211,44 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
               )}
             </div>
 
-            {isLoadingCategories ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-8 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-full" />
-                ))}
-              </div>
-            ) : isCreatingCategory ? (
-              <div className="flex gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                <input
-                  type="text"
-                  autoFocus
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500"
-                  placeholder="Enter new category name"
-                />
-                <button
-                  type="button"
-                  onClick={handleCreateCategory}
-                  disabled={isSubmitting || !newCategoryName.trim()}
-                  className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 disabled:opacity-50 transition-colors"
-                >
-                  Create
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCreatingCategory(false);
-                    setNewCategoryName("");
-                  }}
-                  className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                >
-                  Cancel
-                </button>
+            {isCreatingCategory ? (
+              <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    autoFocus
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500"
+                    placeholder="Enter new category name"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCreateCategory}
+                    disabled={isSubmitting || !newCategoryName.trim()}
+                    className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 disabled:opacity-50 transition-colors"
+                  >
+                    Create
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreatingCategory(false);
+                      setNewCategoryName("");
+                    }}
+                    className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="flex flex-wrap gap-2 animate-in fade-in duration-300">
-                {categories.length > 0 ? (
-                  categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setCategoryId(cat.id)}
-                      className={`group relative flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-200 ${categoryId === cat.id
-                        ? "ring-2 ring-offset-2 ring-zinc-900 dark:ring-zinc-50 dark:ring-offset-zinc-950 scale-105"
-                        : "bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
-                        }`}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                      {cat.name}
-                      {categoryId === cat.id && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-zinc-900 text-[10px] text-white ring-2 ring-white dark:bg-zinc-50 dark:text-zinc-900 dark:ring-zinc-950">
-                          ✓
-                        </span>
-                      )}
-                    </button>
-                  ))
-                ) : (
-                  <p className="text-sm text-zinc-500 italic">No categories found. Create one to get started.</p>
-                )}
-              </div>
+              <CategorySelector
+                categories={categories}
+                selectedId={categoryId}
+                onSelect={(id: string) => setCategoryId(id)}
+                isLoading={isLoadingCategories}
+              />
             )}
           </div>
 
@@ -342,4 +317,3 @@ function getTodayDate(): string {
   const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
-
