@@ -1,9 +1,8 @@
 'use server';
 
-import { spawn } from 'child_process';
-import path from 'path';
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { parseBBVA, ParsedTransaction } from "@/lib/parsers/bbva-parser";
 
 interface ImportResult {
     success: boolean;
@@ -12,16 +11,27 @@ interface ImportResult {
     error?: string;
 }
 
-interface WoobTransaction {
-    date: string;
-    amount: number;
-    label: string;
-    raw_label?: string;
-    category?: string;
-    id?: string;
-}
+export async function importTransactions(formData: FormData): Promise<ImportResult> {
+    const file = formData.get('file') as File;
 
-export async function importTransactions(bank: string, credentials: any): Promise<ImportResult> {
+    if (!file) {
+        return { success: false, error: "No file provided" };
+    }
+
+    const buffer = await file.arrayBuffer();
+
+    let parsedTransactions: ParsedTransaction[] = [];
+    try {
+        parsedTransactions = await parseBBVA(buffer);
+    } catch (e) {
+        console.error("Parse error:", e);
+        return { success: false, error: "Failed to parse file. Please ensure it is a valid BBVA Excel or CSV file." };
+    }
+
+    if (parsedTransactions.length === 0) {
+        return { success: false, error: "No transactions found in file." };
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -29,19 +39,7 @@ export async function importTransactions(bank: string, credentials: any): Promis
         return { success: false, error: "User not authenticated" };
     }
 
-    // 1. Fetch transactions via Python
-    let fetchedTransactions: WoobTransaction[] = [];
-    try {
-        fetchedTransactions = await runPythonScript(bank, credentials);
-    } catch (e) {
-        return { success: false, error: e instanceof Error ? e.message : 'Unknown Python Error' };
-    }
-
-    if (!fetchedTransactions || fetchedTransactions.length === 0) {
-        return { success: true, count: 0, duplicateCount: 0 };
-    }
-
-    // 2. Fetch User Categories for matching
+    // Fetch User Categories for matching
     const { data: categories } = await supabase
         .from('categories')
         .select('*')
@@ -52,19 +50,22 @@ export async function importTransactions(bank: string, credentials: any): Promis
     let importedCount = 0;
     let duplicateCount = 0;
 
-    for (const tr of fetchedTransactions) {
+    for (const tr of parsedTransactions) {
         const isExpense = tr.amount < 0;
         const type = isExpense ? 'expense' : 'income';
         const absAmount = Math.abs(tr.amount);
-        const description = tr.label || tr.raw_label || 'Imported Transaction';
+        const description = tr.description || 'Imported Transaction';
+
+        // Fix date if needed (ensure YYYY-MM-DD)
+        // parsedTransactions already returns YYYY-MM-DD from parser
 
         // 3. Check for duplicates
-        // Simple duplicate check: same user, same date, same amount, same description (type is implied by amount sign/type)
         const { count } = await supabase
             .from('transactions')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id)
             .eq('date', tr.date)
+            // Description match can be fuzzy, but strict for now
             .eq('description', description)
             .eq('amount', absAmount)
             .eq('type', type);
@@ -77,21 +78,26 @@ export async function importTransactions(bank: string, credentials: any): Promis
         // 4. Resolve Category
         let categoryId = '';
 
-        // Try to match by name
-        if (tr.category) {
-            const match = userCategories.find(c =>
-                c.name.toLowerCase() === tr.category!.toLowerCase() && c.category_type === type
-            );
-            if (match) {
-                categoryId = match.id;
-            }
+        // Try to match by name (simple keyword matching could be added here)
+        // For now, simple exact match on description vs category name? Unlikely.
+
+        // Simple keyword matching
+        const lowDesc = description.toLowerCase();
+
+        // Check if any category name is contained in description
+        const categoryMatch = userCategories.find(c =>
+            lowDesc.includes(c.name.toLowerCase()) && c.category_type === type
+        );
+
+        if (categoryMatch) {
+            categoryId = categoryMatch.id;
         }
 
         // If no match, try to find "General", "Uncategorized", "Imported"
         if (!categoryId) {
-            const fallbackNames = ['Uncategorized', 'General', 'Imported', 'Others'];
+            const fallbackNames = ['Uncategorized', 'General', 'Imported', 'Others', 'Varios'];
             const fallback = userCategories.find(c =>
-                fallbackNames.includes(c.name) && c.category_type === type
+                fallbackNames.some(name => c.name.toLowerCase() === name.toLowerCase()) && c.category_type === type
             );
             if (fallback) {
                 categoryId = fallback.id;
@@ -100,22 +106,30 @@ export async function importTransactions(bank: string, credentials: any): Promis
 
         // If STILL no category, we must create one "Imported"
         if (!categoryId) {
-            const { data: newCat } = await supabase
-                .from('categories')
-                .insert({
-                    user_id: user.id,
-                    name: 'Imported',
-                    category_type: type,
-                    color: '#9ca3af' // Zinc-400
-                })
-                .select()
-                .single();
+            // Check if "Imported" exists
+            let importedCat = userCategories.find(c => c.name === 'Imported' && c.category_type === type);
 
-            if (newCat) {
-                categoryId = newCat.id;
-                userCategories.push(newCat);
+            if (!importedCat) {
+                const { data: newCat } = await supabase
+                    .from('categories')
+                    .insert({
+                        user_id: user.id,
+                        name: 'Imported',
+                        category_type: type,
+                        color: '#9ca3af' // Zinc-400
+                    })
+                    .select()
+                    .single();
+                if (newCat) {
+                    importedCat = newCat;
+                    userCategories.push(newCat);
+                }
+            }
+
+            if (importedCat) {
+                categoryId = importedCat.id;
             } else {
-                // Fallback to ANY category of that type?
+                // Fallback to ANY category
                 const anyCat = userCategories.find(c => c.category_type === type);
                 if (anyCat) categoryId = anyCat.id;
             }
@@ -123,6 +137,7 @@ export async function importTransactions(bank: string, credentials: any): Promis
 
         if (!categoryId) {
             console.error("Could not resolve category for transaction", tr);
+            // Skip if no category can be assigned (should not happen with fallback)
             continue;
         }
 
@@ -131,9 +146,10 @@ export async function importTransactions(bank: string, credentials: any): Promis
             user_id: user.id,
             amount: absAmount,
             type: type,
-            category_id: categoryId,
+            category_id: categoryId, // Now required in DB
             description: description,
             date: tr.date,
+            // category: categoryId // Legacy field, might be needed if triggers use it, but type says optional/legacy
         });
 
         if (!error) {
@@ -145,58 +161,4 @@ export async function importTransactions(bank: string, credentials: any): Promis
 
     revalidatePath('/');
     return { success: true, count: importedCount, duplicateCount };
-}
-
-async function runPythonScript(bank: string, credentials: any): Promise<WoobTransaction[]> {
-    return new Promise((resolve, reject) => {
-        const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
-        const scriptPath = path.join(process.cwd(), 'scripts', 'import_transactions.py');
-
-        const pyProcess = spawn(pythonCommand, [scriptPath, bank]);
-
-        let outputData = '';
-        let errorData = '';
-
-        pyProcess.stdout.on('data', (data) => {
-            outputData += data.toString();
-        });
-
-        pyProcess.stderr.on('data', (data) => {
-            errorData += data.toString();
-        });
-
-        pyProcess.on('close', (code) => {
-            if (code !== 0) {
-                try {
-                    const jsonError = JSON.parse(outputData);
-                    if (jsonError.error) {
-                        reject(new Error(jsonError.error));
-                        return;
-                    }
-                } catch (e) {
-                    // ignore
-                }
-                reject(new Error(`Process exited with code ${code}. Error: ${errorData || outputData}`));
-                return;
-            }
-
-            try {
-                const results = JSON.parse(outputData);
-                if (results.error) {
-                    reject(new Error(results.error));
-                } else {
-                    resolve(results);
-                }
-            } catch (err) {
-                reject(new Error(`Failed to parse Python output: ${err.message}. Output: ${outputData}`));
-            }
-        });
-
-        pyProcess.on('error', (err) => {
-            reject(new Error(`Failed to spawn python process: ${err.message}`));
-        });
-
-        pyProcess.stdin.write(JSON.stringify(credentials));
-        pyProcess.stdin.end();
-    });
 }
