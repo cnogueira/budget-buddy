@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabase } from "@/lib/supabase";
-import { DEV_CONFIG } from "@/lib/dev-config";
+import { createClient } from "@/lib/supabase/server";
 import { TransactionInsert, TransactionType, TransactionWithCategory } from "@/types/database";
 
 interface GetTransactionsResult {
@@ -48,10 +47,19 @@ interface GetDashboardSummaryResult {
 
 export async function getTransactions(): Promise<GetTransactionsResult> {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const { data, error } = await supabase
       .from("transactions")
       .select("*, categories(*)")
-      .eq("user_id", DEV_CONFIG.DEV_USER_ID)
+      .eq("user_id", user.id)
       .order("date", { ascending: false })
       .limit(20);
 
@@ -95,13 +103,22 @@ export async function addTransaction(
     }
 
     // Insert transaction
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const { error } = await supabase.from("transactions").insert({
       amount: transaction.amount,
       type: transaction.type,
       category_id: transaction.category_id,
       description: transaction.description?.trim() || null,
       date: transaction.date,
-      user_id: DEV_CONFIG.DEV_USER_ID, // Dev user until auth is implemented
+      user_id: user.id,
     });
 
     if (error) {
@@ -126,11 +143,20 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
       return { success: false, error: "Transaction ID is required" };
     }
 
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const { error } = await supabase
       .from("transactions")
       .delete()
       .eq("id", id)
-      .eq("user_id", DEV_CONFIG.DEV_USER_ID); // Only delete dev user's transactions
+      .eq("user_id", user.id);
 
     if (error) {
       return { success: false, error: error.message };
@@ -159,10 +185,19 @@ export async function getDashboardSummary(): Promise<GetDashboardSummaryResult> 
     const endOfMonthString = formatDateToYYYYMMDD(endOfMonth);
     const startOfTrendRangeString = formatDateToYYYYMMDD(startOfTrendRange);
 
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const { data: monthTransactions, error: monthError } = await supabase
       .from("transactions")
       .select("amount, type, category_id, categories(name, color)")
-      .eq("user_id", DEV_CONFIG.DEV_USER_ID)
+      .eq("user_id", user.id)
       .gte("date", startOfMonthString)
       .lte("date", endOfMonthString);
 
@@ -173,7 +208,7 @@ export async function getDashboardSummary(): Promise<GetDashboardSummaryResult> 
     const { data: trendTransactions, error: trendError } = await supabase
       .from("transactions")
       .select("amount, type, date")
-      .eq("user_id", DEV_CONFIG.DEV_USER_ID)
+      .eq("user_id", user.id)
       .gte("date", startOfTrendRangeString)
       .lte("date", endOfMonthString);
 
@@ -184,7 +219,7 @@ export async function getDashboardSummary(): Promise<GetDashboardSummaryResult> 
     const { data: recentTransactions, error: recentError } = await supabase
       .from("transactions")
       .select("*, categories(*)")
-      .eq("user_id", DEV_CONFIG.DEV_USER_ID)
+      .eq("user_id", user.id)
       .order("date", { ascending: false })
       .limit(5);
 

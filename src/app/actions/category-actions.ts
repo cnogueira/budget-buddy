@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabase } from "@/lib/supabase";
-import { DEV_CONFIG } from "@/lib/dev-config";
+import { createClient } from "@/lib/supabase/server";
 import { Category, CategoryInsert, TransactionType } from "@/types/database";
 
 interface GetCategoriesResult {
@@ -77,10 +76,19 @@ const MAX_EXPENSE_CATEGORIES = 26;
 
 export async function getCategories(): Promise<GetCategoriesResult> {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const { data, error } = await supabase
       .from("categories")
       .select("*")
-      .eq("user_id", DEV_CONFIG.DEV_USER_ID)
+      .eq("user_id", user.id)
       .order("name", { ascending: true });
 
     if (error) {
@@ -100,10 +108,19 @@ export async function getCategoriesByType(
   type: TransactionType
 ): Promise<GetCategoriesResult> {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const { data, error } = await supabase
       .from("categories")
       .select("*")
-      .eq("user_id", DEV_CONFIG.DEV_USER_ID)
+      .eq("user_id", user.id)
       .eq("category_type", type)
       .order("name", { ascending: true });
 
@@ -134,10 +151,19 @@ export async function createCategory(
     }
 
     // Get existing categories for this user and type
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const { data: existingCategories, error: fetchError } = await supabase
       .from("categories")
       .select("color")
-      .eq("user_id", DEV_CONFIG.DEV_USER_ID)
+      .eq("user_id", user.id)
       .eq("category_type", category.category_type);
 
     if (fetchError) {
@@ -180,7 +206,7 @@ export async function createCategory(
         name: category.name.trim(),
         category_type: category.category_type,
         color: randomColor,
-        user_id: DEV_CONFIG.DEV_USER_ID,
+        user_id: user.id,
       })
       .select()
       .single();

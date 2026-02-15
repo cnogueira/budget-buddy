@@ -48,8 +48,8 @@ We are building the core transaction management features.
 
 ## Completed
 ✅ Supabase client initialized in `src/lib/supabase.ts`
-   - Two clients: `supabase` (anon key, respects RLS) and `supabaseAdmin` (service role, bypasses RLS)
-   - Admin client used in Server Actions for development (until auth is implemented)
+   - Configured with `anon` key for frontend and server-side interactions
+   - Development uses `DEV_CONFIG.DEV_USER_ID` as a hardcoded UUID to simulate multi-tenancy until auth is fully implemented
 ✅ Database schema deployed to Supabase with RLS policies
 ✅ Transaction List feature:
    - Server Action: `getTransactions()` in `src/app/actions/transaction-actions.ts`
@@ -67,13 +67,9 @@ We are building the core transaction management features.
    - Delete button added to each row in TransactionList
    - Confirmation dialog before deletion
    - Page revalidates after deletion to refresh the list
-✅ RLS Error Fixed:
-   - Using `supabaseAdmin` (service role key) in Server Actions to bypass RLS during development
-   - Service role key added to `.env.local` (must be obtained from Supabase Dashboard)
+✅ Multi-tenancy simulation:
+   - Using `DEV_CONFIG.DEV_USER_ID` in all Server Actions to filter data correctly during development
 
-✅ RLS Error Fixed:
-   - Using `supabaseAdmin` (service role key) in Server Actions to bypass RLS during development
-   - Service role key added to `.env.local` (must be obtained from Supabase Dashboard)
 ✅ Categories Feature:
    - Created `categories` table with RLS policies
    - Categories have: id, name, category_type (income/expense), color, user_id
@@ -88,29 +84,31 @@ We are building the core transaction management features.
    - Updated `AddTransactionForm` to allow selecting existing categories or creating new ones on the fly
    - Category selector shows colored badges for quick selection
    - Form validates category limits and shows helpful error messages
+✅ Dashboard Summary:
+   - Server Action: `getDashboardSummary()` in `src/app/actions/transaction-actions.ts`
+   - UI Component: `DashboardSummary` in `src/components/DashboardSummary.tsx`
+   - Displays month-to-date income vs expenses
+   - Category breakdown with progress bars and color coding
+   - Recent transactions list
+   - 6-month balance trends visualization
 
 ## Next Steps
 
-1. **Dashboard Summary**
-   Create a dashboard summary component that shows:
-   - Total income vs expenses for current month
-   - Category breakdown (pie/bar chart)
-   - Recent transactions summary
-   - Balance trends
+1. **User Authentication (MVP Priority 1)**
+   - **Login/Register Page**: Create an initial landing page for users to sign up or sign in using Supabase Auth
+   - **Route Protection**: Ensure the dashboard and other features are only accessible after authentication
+   - **Global Navigation Bar**: Implement a persistent nav bar at the top of every page showing:
+     - Project logo/link to dashboard
+     - Logged-in user information (email/avatar)
+     - Logout button/link
+   - **Legacy Migration**: Replace `DEV_CONFIG.DEV_USER_ID` with `auth.uid()` from the actual Supabase session in all Server Actions
 
-2. **Category Management UI**
-   Create a dedicated page for managing categories:
-   - View all categories with their colors
-   - Edit category names
-   - Delete categories (with confirmation)
-   - Reassign transactions when deleting a category
+2. **Bank Integration (MVP Priority 2)**
+   - Implement automatic transaction scraping
+   - Tech stack: Integration with `woob` (Web Outside Of Browsers)
+   - Interop: Python integration to handle the scraping logic
+   - Automate the list of transactions from banks directly into the app
 
-3. **User Authentication**
-   Implement proper authentication:
-   - Sign up / Sign in with Supabase Auth
-   - Remove DEV_CONFIG and use actual auth.uid()
-   - Protect routes
-   - Add user profile management
 
 
 
