@@ -1,5 +1,6 @@
 import { getTransactions } from "@/app/actions/transaction-actions";
 import { AddTransactionButton } from "@/components/AddTransactionButton";
+import { ImportTransactionsButton } from "@/components/ImportTransactionsButton";
 import { DashboardSummary } from "@/components/DashboardSummary";
 import { TransactionList } from "@/components/TransactionList";
 
@@ -25,7 +26,10 @@ export default async function Home() {
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
               Recent Transactions
             </h2>
-            <AddTransactionButton />
+            <div className="flex gap-2">
+              <ImportTransactionsButton />
+              <AddTransactionButton />
+            </div>
           </div>
 
           {result.success && result.data ? (
