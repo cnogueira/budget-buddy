@@ -1,9 +1,14 @@
 import { getDashboardSummary } from "@/app/actions/transaction-actions";
+import { BalanceTrendsChart } from "@/components/BalanceTrendsChart";
 import { ArrowDownRight, ArrowUpRight, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
 
-export async function DashboardSummary() {
-  const result = await getDashboardSummary();
+interface DashboardSummaryProps {
+  month: string;
+}
+
+export async function DashboardSummary({ month }: DashboardSummaryProps) {
+  const result = await getDashboardSummary(month);
 
   if (!result.success || !result.data) {
     return (
@@ -23,10 +28,6 @@ export async function DashboardSummary() {
 
   const incomeCategories = categoryBreakdown.filter((item) => item.type === "income");
   const expenseCategories = categoryBreakdown.filter((item) => item.type === "expense");
-  const trendScale = Math.max(
-    ...monthlyTrends.map((trend) => Math.abs(trend.net)),
-    1
-  );
 
   return (
     <section className="mb-8">
@@ -99,47 +100,7 @@ export async function DashboardSummary() {
             Net income vs expenses
           </span>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-6">
-          {monthlyTrends.map((trend) => {
-            const height = Math.round((Math.abs(trend.net) / trendScale) * 64);
-            return (
-              <div key={trend.month} className="flex flex-col items-center gap-2">
-                {trend.net === 0 ? (
-                  <div className="flex h-20 items-end">
-                    <div className="h-px w-6 bg-zinc-300 dark:bg-zinc-700" />
-                  </div>
-                ) : (
-                  <div className="flex h-20 items-end">
-                    <div
-                      className={
-                        trend.net >= 0
-                          ? "w-6 rounded-md bg-green-500/70"
-                          : "w-6 rounded-md bg-red-500/70"
-                      }
-                      style={{ height }}
-                    />
-                  </div>
-                )}
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {trend.month}
-                </span>
-                {trend.net === 0 ? (
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">—</span>
-                ) : (
-                  <span
-                    className={
-                      trend.net >= 0
-                        ? "text-xs text-green-600 dark:text-green-400"
-                        : "text-xs text-red-600 dark:text-red-400"
-                    }
-                  >
-                    {formatCurrency(trend.net)}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <BalanceTrendsChart trends={monthlyTrends} selectedMonth={month} />
       </div>
     </section>
   );

@@ -1,13 +1,23 @@
 import { getTransactions } from "@/app/actions/transaction-actions";
 import { getCategories } from "@/app/actions/category-actions";
+import { parseMonthParam, formatMonthParam, formatMonthHeading } from "@/lib/month";
 import { AddTransactionButton } from "@/components/AddTransactionButton";
 import { ImportTransactionsButton } from "@/components/ImportTransactionsButton";
 import { DashboardSummary } from "@/components/DashboardSummary";
+import { MonthNav } from "@/components/MonthNav";
 import { TransactionList } from "@/components/TransactionList";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
+  const { month: monthParam } = await searchParams;
+  const selectedMonth = parseMonthParam(monthParam);
+  const monthKey = formatMonthParam(selectedMonth);
+
   const [transactionResult, categoryResult] = await Promise.all([
-    getTransactions(),
+    getTransactions(monthKey),
     getCategories(),
   ]);
 
@@ -17,13 +27,14 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <header className="mb-8">
+        <header className="mb-8 flex items-center gap-3">
+          <MonthNav currentMonth={monthKey} />
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+            {formatMonthHeading(selectedMonth)}
           </h1>
         </header>
 
-        <DashboardSummary />
+        <DashboardSummary month={monthKey} />
 
         <section>
           <div className="mb-4 flex items-center justify-between">

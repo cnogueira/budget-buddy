@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { Category, TransactionInsert, TransactionType, TransactionWithCategory } from "@/types/database";
+import { Category, MonthlyTrendItem, TransactionInsert, TransactionType, TransactionWithCategory } from "@/types/database";
+import { parseMonthParam, formatMonthParam } from "@/lib/month";
 
 type RawTransactionRow = Omit<TransactionWithCategory, 'categories'> & {
   categories: Category | Category[] | null;
@@ -43,20 +44,13 @@ interface CategoryBreakdownItem {
   type: TransactionType;
 }
 
-interface MonthlyTrendItem {
-  month: string;
-  income: number;
-  expense: number;
-  net: number;
-}
-
 interface GetDashboardSummaryResult {
   success: boolean;
   data?: DashboardSummaryData;
   error?: string;
 }
 
-export async function getTransactions(): Promise<GetTransactionsResult> {
+export async function getTransactions(month?: string): Promise<GetTransactionsResult> {
   try {
     const supabase = await createClient();
     const {
@@ -67,12 +61,23 @@ export async function getTransactions(): Promise<GetTransactionsResult> {
       return { success: false, error: "User not authenticated" };
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("transactions")
       .select("*, categories(*)")
       .eq("user_id", user.id)
-      .order("date", { ascending: false })
-      .limit(20);
+      .order("date", { ascending: false });
+
+    if (month) {
+      const anchor = parseMonthParam(month);
+      const start = formatMonthParam(anchor) + "-01";
+      const endDate = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+      const end = `${formatMonthParam(anchor)}-${String(endDate.getDate()).padStart(2, "0")}`;
+      query = query.gte("date", start).lte("date", end);
+    } else {
+      query = query.limit(20);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       return { success: false, error: error.message };
@@ -185,12 +190,12 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
   }
 }
 
-export async function getDashboardSummary(): Promise<GetDashboardSummaryResult> {
+export async function getDashboardSummary(month?: string): Promise<GetDashboardSummaryResult> {
   try {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const startOfTrendRange = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const anchor = parseMonthParam(month);
+    const startOfMonth = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+    const endOfMonth = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+    const startOfTrendRange = new Date(anchor.getFullYear(), anchor.getMonth() - 5, 1);
 
     const startOfMonthString = formatDateToYYYYMMDD(startOfMonth);
     const endOfMonthString = formatDateToYYYYMMDD(endOfMonth);
@@ -231,6 +236,8 @@ export async function getDashboardSummary(): Promise<GetDashboardSummaryResult> 
       .from("transactions")
       .select("*, categories(*)")
       .eq("user_id", user.id)
+      .gte("date", startOfMonthString)
+      .lte("date", endOfMonthString)
       .order("date", { ascending: false })
       .limit(5);
 
@@ -240,7 +247,7 @@ export async function getDashboardSummary(): Promise<GetDashboardSummaryResult> 
 
     const totals = calculateMonthTotals(monthTransactions || []);
     const categoryBreakdown = buildCategoryBreakdown(monthTransactions || []);
-    const monthlyTrends = buildMonthlyTrends(trendTransactions || [], now);
+    const monthlyTrends = buildMonthlyTrends(trendTransactions || [], anchor);
 
     const normalizedRecentTransactions = (recentTransactions || []).map((t: RawTransactionRow) => ({
       ...t,
@@ -360,6 +367,7 @@ function buildMonthlyTrends(
     const entry = trendMap.get(key) || { income: 0, expense: 0 };
     return {
       month: trendLabels[index],
+      monthKey: key,
       income: entry.income,
       expense: entry.expense,
       net: entry.income - entry.expense,
