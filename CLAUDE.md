@@ -56,6 +56,18 @@ There is no test runner configured beyond `bbva-parser.test.ts` (which appears t
 - Temporary docs, notes, and instructions go in `temp/`.
 - Do not create multiple instruction files for a single feature.
 
+## Planning Workflow
+
+When asked to plan a new feature, follow this flow:
+
+1. **Explore** the codebase to understand what's relevant (existing patterns, types, actions, components).
+2. **Clarify** any ambiguous requirements with the user before designing.
+3. **Design** a concrete implementation plan: files to create/modify, functions to write, reuse opportunities.
+4. **Get approval** via `ExitPlanMode`.
+5. **Create a GitHub issue** with the approved plan via `gh issue create`. The issue body must include enough context for a separate Claude instance to implement it cold — architecture notes, key file paths, FK ordering, auth patterns, relevant existing utilities, and a verification checklist.
+
+Implementation is handled separately (by another instance working off the issue), so the issue is the deliverable — not a local plan file.
+
 ## Environment Variables
 
 Required in `.env.local` (and Vercel for production):
