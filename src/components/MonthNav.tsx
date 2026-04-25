@@ -1,38 +1,29 @@
 "use client";
 
+import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { parseMonthParam, formatMonthParam } from "@/lib/month";
 
 interface MonthNavProps {
   currentMonth: string;
 }
 
 export function MonthNav({ currentMonth }: MonthNavProps) {
-  const router = useRouter();
+  const current = parseMonthParam(currentMonth);
+  const prev = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+  const next = new Date(current.getFullYear(), current.getMonth() + 1, 1);
 
-  function navigate(direction: -1 | 1) {
-    const [year, month] = currentMonth.split("-").map(Number);
-    const date = new Date(year, month - 1 + direction, 1);
-    const newKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    router.push(`/?month=${newKey}`);
-  }
+  const linkClass =
+    "rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50";
 
   return (
     <div className="flex items-center gap-1">
-      <button
-        onClick={() => navigate(-1)}
-        className="rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-        aria-label="Previous month"
-      >
+      <Link href={`/?month=${formatMonthParam(prev)}`} aria-label="Previous month" className={linkClass}>
         <ChevronLeft className="h-5 w-5" />
-      </button>
-      <button
-        onClick={() => navigate(1)}
-        className="rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-        aria-label="Next month"
-      >
+      </Link>
+      <Link href={`/?month=${formatMonthParam(next)}`} aria-label="Next month" className={linkClass}>
         <ChevronRight className="h-5 w-5" />
-      </button>
+      </Link>
     </div>
   );
 }

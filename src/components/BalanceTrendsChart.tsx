@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { formatCurrency } from "@/lib/format";
 import type { MonthlyTrendItem } from "@/types/database";
 
 interface BalanceTrendsChartProps {
@@ -9,7 +10,6 @@ interface BalanceTrendsChartProps {
 }
 
 export function BalanceTrendsChart({ trends, selectedMonth }: BalanceTrendsChartProps) {
-  const router = useRouter();
   const trendScale = Math.max(...trends.map((t) => Math.abs(t.net)), 1);
 
   return (
@@ -18,9 +18,10 @@ export function BalanceTrendsChart({ trends, selectedMonth }: BalanceTrendsChart
         const isSelected = trend.monthKey === selectedMonth;
         const height = Math.round((Math.abs(trend.net) / trendScale) * 64);
         return (
-          <button
+          <Link
             key={trend.monthKey}
-            onClick={() => router.push(`/?month=${trend.monthKey}`)}
+            href={`/?month=${trend.monthKey}`}
+            aria-label={`View ${trend.month}`}
             className="flex cursor-pointer flex-col items-center gap-2"
           >
             {trend.net === 0 ? (
@@ -61,17 +62,9 @@ export function BalanceTrendsChart({ trends, selectedMonth }: BalanceTrendsChart
                 {formatCurrency(trend.net)}
               </span>
             )}
-          </button>
+          </Link>
         );
       })}
     </div>
   );
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(value);
 }

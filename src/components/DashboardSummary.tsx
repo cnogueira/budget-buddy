@@ -1,5 +1,6 @@
 import { getDashboardSummary } from "@/app/actions/transaction-actions";
 import { BalanceTrendsChart } from "@/components/BalanceTrendsChart";
+import { formatCurrency } from "@/lib/format";
 import { ArrowDownRight, ArrowUpRight, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -181,10 +182,3 @@ function CategoryBreakdownList({ title, items }: CategoryBreakdownListProps) {
   );
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(value);
-}

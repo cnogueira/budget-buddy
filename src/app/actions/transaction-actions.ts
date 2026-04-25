@@ -69,10 +69,11 @@ export async function getTransactions(month?: string): Promise<GetTransactionsRe
 
     if (month) {
       const anchor = parseMonthParam(month);
-      const start = formatMonthParam(anchor) + "-01";
+      const prefix = formatMonthParam(anchor);
       const endDate = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
-      const end = `${formatMonthParam(anchor)}-${String(endDate.getDate()).padStart(2, "0")}`;
-      query = query.gte("date", start).lte("date", end);
+      const start = `${prefix}-01`;
+      const end = `${prefix}-${String(endDate.getDate()).padStart(2, "0")}`;
+      query = query.gte("date", start).lte("date", end).limit(200);
     } else {
       query = query.limit(20);
     }

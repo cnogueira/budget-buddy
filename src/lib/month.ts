@@ -1,9 +1,8 @@
 export function parseMonthParam(param?: string): Date {
   if (param && /^\d{4}-\d{2}$/.test(param)) {
     const [year, month] = param.split("-").map(Number);
-    const date = new Date(year, month - 1, 1);
-    if (!isNaN(date.getTime())) {
-      return date;
+    if (month >= 1 && month <= 12) {
+      return new Date(year, month - 1, 1);
     }
   }
   const now = new Date();
