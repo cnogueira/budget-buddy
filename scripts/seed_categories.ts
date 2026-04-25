@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
-import path from 'path';
 
 dotenv.config({ path: '.env.local' });
 
@@ -91,7 +90,7 @@ async function seed() {
     let userId: string;
 
     // 1. Try to get user via Auth Admin (requires Service Role Key)
-    const { data: adminData, error: adminError } = await (supabase.auth as any).admin.listUsers();
+    const { data: adminData, error: adminError } = await supabase.auth.admin.listUsers();
 
     if (adminData?.users && adminData.users.length > 0) {
         userId = adminData.users[0].id;

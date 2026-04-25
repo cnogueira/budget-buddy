@@ -41,13 +41,6 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
     loadCategories();
   }, []);
 
-  // Reset category selection when type changes
-  useEffect(() => {
-    setCategoryId("");
-    setIsCreatingCategory(false);
-    setNewCategoryName("");
-  }, [type]);
-
   async function handleCreateCategory() {
     if (!newCategoryName.trim()) {
       setMessage({ type: "error", text: "Please enter a category name" });
@@ -172,7 +165,7 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                   name="transactionType"
                   value="expense"
                   checked={type === 'expense'}
-                  onChange={() => setType('expense')}
+                  onChange={() => { setType('expense'); setCategoryId(''); setIsCreatingCategory(false); setNewCategoryName(''); }}
                   className="sr-only"
                 />
                 Expense
@@ -186,7 +179,7 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                   name="transactionType"
                   value="income"
                   checked={type === 'income'}
-                  onChange={() => setType('income')}
+                  onChange={() => { setType('income'); setCategoryId(''); setIsCreatingCategory(false); setNewCategoryName(''); }}
                   className="sr-only"
                 />
                 Income

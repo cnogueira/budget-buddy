@@ -16,7 +16,7 @@ export async function parseBBVA(buffer: ArrayBuffer): Promise<ParsedTransaction[
     const sheet = workbook.Sheets[sheetName];
 
     // Get raw values with header: 1 to get array of arrays
-    const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, raw: false });
+    const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: false });
 
     if (rows.length === 0) {
         return [];
@@ -55,10 +55,10 @@ export async function parseBBVA(buffer: ArrayBuffer): Promise<ParsedTransaction[
         if (!row || row.length === 0) continue;
 
         // Date Parsing - PRIORITIZE 'Fecha' (Operation Date) for stability as requested
-        let rawFechaOperacion = (fechaIdx !== -1) ? row[fechaIdx] : null;
-        let rawFValor = (fValorIdx !== -1) ? row[fValorIdx] : null;
+        const rawFechaOperacion = (fechaIdx !== -1) ? row[fechaIdx] : null;
+        const rawFValor = (fValorIdx !== -1) ? row[fValorIdx] : null;
 
-        const formatDate = (raw: any) => {
+        const formatDate = (raw: string | null | undefined): string | null => {
             if (!raw) return null;
             const parts = String(raw).split('/');
             if (parts.length === 3) {
@@ -110,7 +110,7 @@ export async function parseBBVA(buffer: ArrayBuffer): Promise<ParsedTransaction[
     return parsedTransactions;
 }
 
-function parseAmount(raw: any): number {
+function parseAmount(raw: unknown): number {
     if (typeof raw === 'number') return raw;
     let str = String(raw).trim().replace(/[€$]/g, '');
 

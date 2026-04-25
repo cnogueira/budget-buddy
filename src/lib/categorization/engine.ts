@@ -1,6 +1,19 @@
+import { SupabaseClient } from '@supabase/supabase-js';
+
 export interface GuessResult {
     categoryId: string | null;
     source: 'USER_RULE' | 'GLOBAL_MATCH' | 'KEYWORD_MATCH' | 'UNKNOWN';
+}
+
+interface MerchantRule {
+    category_id: string;
+    match_pattern: string;
+    match_type?: string;
+}
+
+interface CategoryRow {
+    id: string;
+    name: string;
 }
 
 export function normalizeDescription(raw: string): string {
@@ -16,7 +29,7 @@ export function normalizeDescription(raw: string): string {
  * This is intended to be used in server actions.
  */
 export async function guessCategory(
-    supabase: any,
+    supabase: SupabaseClient,
     userId: string,
     rawDescription: string,
     type: 'income' | 'expense'
@@ -32,11 +45,11 @@ export async function guessCategory(
 
     if (userRules) {
         // 1a. Exact Match
-        const exact = userRules.find((r: any) => r.match_type === 'EXACT' && r.match_pattern === cleanDesc);
+        const exact = userRules.find((r: MerchantRule) => r.match_type === 'EXACT' && r.match_pattern === cleanDesc);
         if (exact) return { categoryId: exact.category_id, source: 'USER_RULE' };
 
         // 1b. Contains Match
-        const contains = userRules.find((r: any) => cleanDesc.includes(r.match_pattern));
+        const contains = userRules.find((r: MerchantRule) => cleanDesc.includes(r.match_pattern));
         if (contains) return { categoryId: contains.category_id, source: 'USER_RULE' };
     }
 
@@ -47,7 +60,7 @@ export async function guessCategory(
         .is('user_id', null);
 
     if (globalRules) {
-        const globalMatch = globalRules.find((r: any) => cleanDesc.includes(r.match_pattern.toLowerCase()));
+        const globalMatch = globalRules.find((r: MerchantRule) => cleanDesc.includes(r.match_pattern.toLowerCase()));
         if (globalMatch) return { categoryId: globalMatch.category_id, source: 'GLOBAL_MATCH' };
     }
 
@@ -61,7 +74,7 @@ export async function guessCategory(
     if (categories) {
         // Sort by length longest first to catch "Dining Out" before "Dining"
         const sortedCats = [...categories].sort((a, b) => b.name.length - a.name.length);
-        const keywordMatch = sortedCats.find((c: any) => cleanDesc.includes(c.name.toLowerCase()));
+        const keywordMatch = sortedCats.find((c: CategoryRow) => cleanDesc.includes(c.name.toLowerCase()));
         if (keywordMatch) return { categoryId: keywordMatch.id, source: 'KEYWORD_MATCH' };
     }
 

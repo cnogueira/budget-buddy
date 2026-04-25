@@ -66,7 +66,7 @@ export function ImportTransactionsForm({ onSuccess }: ImportTransactionsFormProp
                     setTimeout(() => onSuccess(), 2000);
                 }
             }
-        } catch (err) {
+        } catch {
             setResult({ success: false, error: "An unexpected error occurred." });
         } finally {
             setIsLoading(false);

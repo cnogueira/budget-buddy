@@ -2,7 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { TransactionInsert, TransactionType, TransactionWithCategory } from "@/types/database";
+import { Category, TransactionInsert, TransactionType, TransactionWithCategory } from "@/types/database";
+
+type RawTransactionRow = Omit<TransactionWithCategory, 'categories'> & {
+  categories: Category | Category[] | null;
+};
+
+type MonthTransaction = {
+  amount: number;
+  type: TransactionType;
+  category_id: string | null;
+  categories: Pick<Category, 'name' | 'color'> | Pick<Category, 'name' | 'color'>[] | null;
+};
 
 interface GetTransactionsResult {
   success: boolean;
@@ -67,7 +78,7 @@ export async function getTransactions(): Promise<GetTransactionsResult> {
       return { success: false, error: error.message };
     }
 
-    const normalizedData = (data || []).map((t: any) => ({
+    const normalizedData = (data || []).map((t: RawTransactionRow) => ({
       ...t,
       categories: Array.isArray(t.categories) ? t.categories[0] : t.categories,
     }));
@@ -231,7 +242,7 @@ export async function getDashboardSummary(): Promise<GetDashboardSummaryResult> 
     const categoryBreakdown = buildCategoryBreakdown(monthTransactions || []);
     const monthlyTrends = buildMonthlyTrends(trendTransactions || [], now);
 
-    const normalizedRecentTransactions = (recentTransactions || []).map((t: any) => ({
+    const normalizedRecentTransactions = (recentTransactions || []).map((t: RawTransactionRow) => ({
       ...t,
       categories: Array.isArray(t.categories) ? t.categories[0] : t.categories,
     }));
@@ -279,7 +290,7 @@ function calculateMonthTotals(
 }
 
 function buildCategoryBreakdown(
-  transactions: any[]
+  transactions: MonthTransaction[]
 ): CategoryBreakdownItem[] {
   const breakdownMap = new Map<string, CategoryBreakdownItem>();
 

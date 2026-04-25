@@ -23,7 +23,7 @@ const marTransactions = [
     ["10/03/2026", "11/03/2026", "Cena Marzo", "Pago con tarjeta", "-30.00", "EUR", "2878.00", "EUR", "CENA MAR"],
 ];
 
-function createExcel(filename: string, data: any[][]) {
+function createExcel(filename: string, data: (string | number | null)[][]) {
     const filePath = path.join(e2eDir, filename);
     const finalData = [
         [], [null, null, "Últimos movimientos"], [null, null, "Informe generado para test"], [],

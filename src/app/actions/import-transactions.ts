@@ -40,14 +40,6 @@ export async function importTransactions(formData: FormData): Promise<ImportResu
         return { success: false, error: "User not authenticated" };
     }
 
-    // Fetch User Categories for matching
-    const { data: categories } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('user_id', user.id);
-
-    const userCategories = categories || [];
-
     // --- IDEMPOTENCY LOGIC ---
     const groupedFileTransactions = new Map<string, ParsedTransaction[]>();
 
@@ -61,7 +53,7 @@ export async function importTransactions(formData: FormData): Promise<ImportResu
     let importedCount = 0;
     let duplicateCount = 0;
 
-    for (const [key, trs] of groupedFileTransactions.entries()) {
+    for (const [, trs] of groupedFileTransactions.entries()) {
         const tr = trs[0];
         const isExpense = tr.amount < 0;
         const type = isExpense ? 'expense' : 'income';
