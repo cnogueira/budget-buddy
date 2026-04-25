@@ -10,7 +10,7 @@ interface CategoryIconProps extends LucideProps {
 export function CategoryIcon({ name, color, ...props }: CategoryIconProps) {
     // Map string to Lucide component
     // Use a fallback if the icon name is not found
-    const IconComponent = (Icons as Record<string, ComponentType<LucideProps>>)[name] || Icons.HelpCircle;
+    const IconComponent = (Icons as unknown as Record<string, ComponentType<LucideProps>>)[name] || Icons.HelpCircle;
 
     return <IconComponent color={color} {...props} />;
 }
