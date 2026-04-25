@@ -18,12 +18,9 @@ export default async function Home() {
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Budget Buddy
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
           </h1>
-          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            Track your income and expenses
-          </p>
         </header>
 
         <DashboardSummary />
@@ -31,7 +28,7 @@ export default async function Home() {
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-              Recent Transactions
+              Transactions
             </h2>
             <div className="flex gap-2">
               <ImportTransactionsButton />

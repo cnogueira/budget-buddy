@@ -18,7 +18,6 @@ export async function DashboardSummary() {
     monthExpenseTotal,
     monthNet,
     categoryBreakdown,
-    recentTransactions,
     monthlyTrends,
   } = result.data;
 
@@ -31,25 +30,21 @@ export async function DashboardSummary() {
 
   return (
     <section className="mb-8">
-      <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-        Dashboard Summary
-      </h2>
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SummaryCard
-          label="Income (This Month)"
+          label="Income"
           value={formatCurrency(monthIncomeTotal)}
           accent="text-green-600 dark:text-green-400"
           icon={<ArrowUpRight className="h-5 w-5" />}
         />
         <SummaryCard
-          label="Expenses (This Month)"
+          label="Expenses"
           value={formatCurrency(monthExpenseTotal)}
           accent="text-red-600 dark:text-red-400"
           icon={<ArrowDownRight className="h-5 w-5" />}
         />
         <SummaryCard
-          label="Net Balance"
+          label="Saved This Month"
           value={formatCurrency(monthNet)}
           accent={
             monthNet >= 0
@@ -72,42 +67,26 @@ export async function DashboardSummary() {
         </div>
 
         <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-            Recent Transactions
-          </h3>
-          <ul className="mt-4 space-y-3">
-            {recentTransactions.length === 0 ? (
-              <li className="text-sm text-zinc-500 dark:text-zinc-400">
-                No recent activity yet.
-              </li>
-            ) : (
-              recentTransactions.map((transaction) => (
-                <li
-                  key={transaction.id}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <div>
-                    <p className="text-zinc-900 dark:text-zinc-50">
-                      {transaction.categories?.name || "Uncategorized"}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {formatDate(transaction.date)}
-                    </p>
-                  </div>
-                  <span
-                    className={
-                      transaction.type === "income"
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-red-600 dark:text-red-400"
-                    }
-                  >
-                    {transaction.type === "income" ? "+" : "-"}
-                    {formatCurrency(transaction.amount)}
-                  </span>
-                </li>
-              ))
-            )}
-          </ul>
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Monthly Insights</h3>
+          <div className="mt-4 space-y-4">
+            <div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Savings rate</p>
+              <p className="mt-1 text-xl font-semibold text-green-600 dark:text-green-400">
+                {monthIncomeTotal > 0 ? `${Math.round((monthNet / monthIncomeTotal) * 100)}%` : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Top expense</p>
+              <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                {expenseCategories[0]?.name ?? "—"}
+              </p>
+              {expenseCategories[0] && (
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {formatCurrency(expenseCategories[0].total)}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -122,34 +101,41 @@ export async function DashboardSummary() {
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-6">
           {monthlyTrends.map((trend) => {
-            const height = Math.max(
-              Math.round((Math.abs(trend.net) / trendScale) * 64),
-              6
-            );
+            const height = Math.round((Math.abs(trend.net) / trendScale) * 64);
             return (
               <div key={trend.month} className="flex flex-col items-center gap-2">
-                <div className="flex h-20 items-end">
-                  <div
-                    className={
-                      trend.net >= 0
-                        ? "w-6 rounded-md bg-green-500/70"
-                        : "w-6 rounded-md bg-red-500/70"
-                    }
-                    style={{ height }}
-                  />
-                </div>
+                {trend.net === 0 ? (
+                  <div className="flex h-20 items-end">
+                    <div className="h-px w-6 bg-zinc-300 dark:bg-zinc-700" />
+                  </div>
+                ) : (
+                  <div className="flex h-20 items-end">
+                    <div
+                      className={
+                        trend.net >= 0
+                          ? "w-6 rounded-md bg-green-500/70"
+                          : "w-6 rounded-md bg-red-500/70"
+                      }
+                      style={{ height }}
+                    />
+                  </div>
+                )}
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">
                   {trend.month}
                 </span>
-                <span
-                  className={
-                    trend.net >= 0
-                      ? "text-xs text-green-600 dark:text-green-400"
-                      : "text-xs text-red-600 dark:text-red-400"
-                  }
-                >
-                  {formatCurrency(trend.net)}
-                </span>
+                {trend.net === 0 ? (
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">—</span>
+                ) : (
+                  <span
+                    className={
+                      trend.net >= 0
+                        ? "text-xs text-green-600 dark:text-green-400"
+                        : "text-xs text-red-600 dark:text-red-400"
+                    }
+                  >
+                    {formatCurrency(trend.net)}
+                  </span>
+                )}
               </div>
             );
           })}
@@ -240,12 +226,4 @@ function formatCurrency(value: number): string {
     currency: "USD",
     maximumFractionDigits: 2,
   }).format(value);
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
 }
