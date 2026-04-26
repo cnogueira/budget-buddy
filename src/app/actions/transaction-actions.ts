@@ -196,11 +196,16 @@ export async function getDashboardSummary(month?: string): Promise<GetDashboardS
     const anchor = parseMonthParam(month);
     const startOfMonth = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
     const endOfMonth = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
-    const startOfTrendRange = new Date(anchor.getFullYear(), anchor.getMonth() - 5, 1);
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfTrendRange = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+    const endOfTrendRange = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
     const startOfMonthString = formatDateToYYYYMMDD(startOfMonth);
     const endOfMonthString = formatDateToYYYYMMDD(endOfMonth);
     const startOfTrendRangeString = formatDateToYYYYMMDD(startOfTrendRange);
+    const endOfTrendRangeString = formatDateToYYYYMMDD(endOfTrendRange);
 
     const supabase = await createClient();
     const {
@@ -227,7 +232,7 @@ export async function getDashboardSummary(month?: string): Promise<GetDashboardS
       .select("amount, type, date")
       .eq("user_id", user.id)
       .gte("date", startOfTrendRangeString)
-      .lte("date", endOfMonthString);
+      .lte("date", endOfTrendRangeString);
 
     if (trendError) {
       return { success: false, error: trendError.message };
@@ -248,7 +253,7 @@ export async function getDashboardSummary(month?: string): Promise<GetDashboardS
 
     const totals = calculateMonthTotals(monthTransactions || []);
     const categoryBreakdown = buildCategoryBreakdown(monthTransactions || []);
-    const monthlyTrends = buildMonthlyTrends(trendTransactions || [], anchor);
+    const monthlyTrends = buildMonthlyTrends(trendTransactions || [], today);
 
     const normalizedRecentTransactions = (recentTransactions || []).map((t: RawTransactionRow) => ({
       ...t,
