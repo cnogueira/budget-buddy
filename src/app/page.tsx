@@ -1,11 +1,7 @@
-import { getTransactions } from "@/app/actions/transaction-actions";
-import { getCategories } from "@/app/actions/category-actions";
+import { Suspense } from "react";
 import { parseMonthParam, formatMonthParam, formatMonthHeading } from "@/lib/month";
-import { AddTransactionButton } from "@/components/AddTransactionButton";
-import { ImportTransactionsButton } from "@/components/ImportTransactionsButton";
-import { DashboardSummary } from "@/components/DashboardSummary";
 import { MonthNav } from "@/components/MonthNav";
-import { TransactionList } from "@/components/TransactionList";
+import { DashboardContent, DashboardSkeleton } from "@/components/DashboardContent";
 
 export default async function Home({
   searchParams,
@@ -15,14 +11,6 @@ export default async function Home({
   const { month: monthParam } = await searchParams;
   const selectedMonth = parseMonthParam(monthParam);
   const monthKey = formatMonthParam(selectedMonth);
-
-  const [transactionResult, categoryResult] = await Promise.all([
-    getTransactions(monthKey),
-    getCategories(),
-  ]);
-
-  const transactions = transactionResult.success ? transactionResult.data || [] : [];
-  const categories = categoryResult.success ? categoryResult.data || [] : [];
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
@@ -35,30 +23,9 @@ export default async function Home({
           </MonthNav>
         </header>
 
-        <DashboardSummary month={monthKey} />
-
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-              Transactions
-            </h2>
-            <div className="flex gap-2">
-              <ImportTransactionsButton />
-              <AddTransactionButton />
-            </div>
-          </div>
-
-          {transactionResult.success ? (
-            <TransactionList
-              transactions={transactions}
-              categories={categories}
-            />
-          ) : (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-              <p>Failed to load transactions: {transactionResult.error}</p>
-            </div>
-          )}
-        </section>
+        <Suspense key={monthKey} fallback={<DashboardSkeleton />}>
+          <DashboardContent month={monthKey} />
+        </Suspense>
       </main>
     </div>
   );
