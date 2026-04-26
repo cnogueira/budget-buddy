@@ -1,52 +1,31 @@
-import { getTransactions } from "@/app/actions/transaction-actions";
-import { getCategories } from "@/app/actions/category-actions";
-import { AddTransactionButton } from "@/components/AddTransactionButton";
-import { ImportTransactionsButton } from "@/components/ImportTransactionsButton";
-import { DashboardSummary } from "@/components/DashboardSummary";
-import { TransactionList } from "@/components/TransactionList";
+import { Suspense } from "react";
+import { parseMonthParam, formatMonthParam, formatMonthHeading } from "@/lib/month";
+import { MonthNav } from "@/components/MonthNav";
+import { DashboardContent, DashboardSkeleton } from "@/components/DashboardContent";
 
-export default async function Home() {
-  const [transactionResult, categoryResult] = await Promise.all([
-    getTransactions(),
-    getCategories(),
-  ]);
-
-  const transactions = transactionResult.success ? transactionResult.data || [] : [];
-  const categories = categoryResult.success ? categoryResult.data || [] : [];
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
+  const { month: monthParam } = await searchParams;
+  const selectedMonth = parseMonthParam(monthParam);
+  const monthKey = formatMonthParam(selectedMonth);
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-          </h1>
+          <MonthNav currentMonth={monthKey}>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+              {formatMonthHeading(selectedMonth)}
+            </h1>
+          </MonthNav>
         </header>
 
-        <DashboardSummary />
-
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-              Transactions
-            </h2>
-            <div className="flex gap-2">
-              <ImportTransactionsButton />
-              <AddTransactionButton />
-            </div>
-          </div>
-
-          {transactionResult.success ? (
-            <TransactionList
-              transactions={transactions}
-              categories={categories}
-            />
-          ) : (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-              <p>Failed to load transactions: {transactionResult.error}</p>
-            </div>
-          )}
-        </section>
+        <Suspense key={monthKey} fallback={<DashboardSkeleton />}>
+          <DashboardContent month={monthKey} />
+        </Suspense>
       </main>
     </div>
   );

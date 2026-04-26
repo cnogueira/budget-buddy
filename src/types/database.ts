@@ -52,3 +52,11 @@ export interface TransactionWithCategory extends Omit<Transaction, 'category'> {
     categories: Category | null;
 }
 
+export interface MonthlyTrendItem {
+  month: string;     // "Apr 2026" — display label
+  monthKey: string;  // "2026-04"  — navigation key
+  income: number;
+  expense: number;
+  net: number;
+}
+
