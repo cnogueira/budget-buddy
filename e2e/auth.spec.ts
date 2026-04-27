@@ -16,4 +16,5 @@ test('can sign in with email and password', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
   await expect(page).toHaveURL('/');
+  await expect(page.getByRole('button', { name: 'Add Transaction' })).toBeVisible();
 });

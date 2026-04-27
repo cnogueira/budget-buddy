@@ -19,10 +19,10 @@ test('can delete a transaction', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Add Transaction' })).not.toBeVisible({ timeout: 5000 });
   await expect(page.getByText(marker)).toBeVisible();
 
+  // Register before the click that triggers globalThis.confirm()
   page.on('dialog', (dialog) => dialog.accept());
 
-  const row = page.locator('tr', { hasText: marker });
-  await row.getByTitle('Delete transaction').click();
+  await page.locator('tr', { hasText: marker }).getByTitle('Delete transaction').click();
 
   await expect(page.getByText(marker)).not.toBeVisible();
 });

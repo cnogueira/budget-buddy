@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { randomUUID } from 'crypto';
 
 export async function addTransaction(page: Page): Promise<string> {
@@ -12,6 +12,8 @@ export async function addTransaction(page: Page): Promise<string> {
   await page.getByText('+ New Category').click();
   await page.getByPlaceholder('Enter new category name').fill(categoryName);
   await page.getByRole('button', { name: 'Create' }).click();
+  // Wait for the inline category form to close before continuing
+  await expect(page.getByPlaceholder('Enter new category name')).not.toBeVisible();
 
   await page.getByLabel('Description (Optional)').fill(marker);
 
