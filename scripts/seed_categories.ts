@@ -82,8 +82,6 @@ const GLOBAL_RULES = [
     { pattern: 'target', category: 'Shopping' },
 ];
 
-import { TEST_USER } from '../e2e/credentials';
-
 async function seed() {
     console.log('Seeding categories...');
 
@@ -100,16 +98,24 @@ async function seed() {
             console.log('Admin API error (likely missing Service Role Key):', adminError.message);
         }
 
-        console.log(`Attempting to login as ${TEST_USER.email} instead...`);
+        const email = process.env.TEST_USER_EMAIL;
+        const password = process.env.TEST_USER_PASSWORD;
+
+        if (!email || !password) {
+            console.error('No admin access and TEST_USER_EMAIL/TEST_USER_PASSWORD not set in .env.local');
+            return;
+        }
+
+        console.log(`Attempting to login as ${email} instead...`);
 
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-            email: TEST_USER.email,
-            password: TEST_USER.password,
+            email,
+            password,
         });
 
         if (authError) {
             console.error('Login failed:', authError.message);
-            console.error('Make sure your credentials in e2e/credentials.ts match a user in your Supabase project.');
+            console.error('Make sure TEST_USER_EMAIL and TEST_USER_PASSWORD in .env.local match a user in your Supabase project.');
             return;
         }
 
