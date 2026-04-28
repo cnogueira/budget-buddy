@@ -28,9 +28,8 @@ export default function PrivacyPage() {
                 <section className="space-y-3">
                     <h2 className="text-xl font-semibold text-gray-900">Data Storage</h2>
                     <p className="text-gray-700">
-                        All data is stored in a PostgreSQL database hosted by Supabase.
-                        Row-level security (RLS) is enforced at the database level — your data is strictly isolated
-                        and cannot be accessed by other users.
+                        All data is stored securely in the cloud.
+                        Access controls ensure your data is strictly isolated and cannot be accessed by other users.
                     </p>
                 </section>
 
