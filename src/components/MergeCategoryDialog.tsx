@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Category } from "@/types/database";
 import { mergeCategories } from "@/app/actions/category-actions";
 import { Modal } from "./Modal";
+import { CategoryIcon } from "./CategoryIcon";
 
 interface MergeCategoryDialogProps {
     source: Category;
@@ -43,22 +44,30 @@ export function MergeCategoryDialog({
                     the selected category. <strong>&quot;{source.name}&quot;</strong> will then be deleted.
                 </p>
 
-                <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                        Merge into
-                    </label>
-                    <select
-                        value={targetId}
-                        onChange={(e) => setTargetId(e.target.value)}
-                        className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-zinc-500"
-                    >
-                        <option value="">Select a category…</option>
-                        {candidates.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                            </option>
-                        ))}
-                    </select>
+                <div className="space-y-1 max-h-56 overflow-y-auto">
+                    {candidates.map((cat) => (
+                        <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => setTargetId(cat.id)}
+                            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                                targetId === cat.id
+                                    ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
+                                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                            }`}
+                        >
+                            <span
+                                className="flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: cat.color }}
+                            >
+                                <CategoryIcon name={cat.icon} size={14} color="white" />
+                            </span>
+                            <span className="flex-1 text-left font-medium">{cat.name}</span>
+                            {targetId === cat.id && (
+                                <span className="text-xs opacity-75">selected</span>
+                            )}
+                        </button>
+                    ))}
                 </div>
 
                 {error && (
