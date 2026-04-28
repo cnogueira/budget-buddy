@@ -7,10 +7,12 @@ interface CategoryIconProps extends LucideProps {
     color?: string;
 }
 
-export function CategoryIcon({ name, color, ...props }: CategoryIconProps) {
-    // Map string to Lucide component
-    // Use a fallback if the icon name is not found
-    const IconComponent = (Icons as unknown as Record<string, ComponentType<LucideProps>>)[name] || Icons.HelpCircle;
+function toPascalCase(name: string): string {
+    return name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+}
 
+export function CategoryIcon({ name, color, ...props }: CategoryIconProps) {
+    const pascalName = toPascalCase(name);
+    const IconComponent = (Icons as unknown as Record<string, ComponentType<LucideProps>>)[pascalName] || Icons.HelpCircle;
     return <IconComponent color={color} {...props} />;
 }

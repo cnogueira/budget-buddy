@@ -3,6 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { Category, CategoryInsert, TransactionType } from "@/types/database";
+import {
+  CATEGORY_COLORS,
+  CATEGORY_ICONS,
+  OTHERS_NAME,
+  OTHERS_COLOR,
+  OTHERS_ICON,
+} from "@/lib/categories/constants";
 
 interface GetCategoriesResult {
   success: boolean;
@@ -10,69 +17,16 @@ interface GetCategoriesResult {
   error?: string;
 }
 
-interface CreateCategoryResult {
+interface CategoryResult {
   success: boolean;
   data?: Category;
   error?: string;
 }
 
-// Color palettes
-const INCOME_COLORS = [
-  "#0d9488", // teal-600
-  "#86efac", // green-300
-  "#22c55e", // green-500
-  "#84cc16", // lime-500
-  "#15803d", // green-700
-  "#052e16", // green-950
-];
-
-const EXPENSE_COLORS = [
-  // Neutrals (high separation anchors)
-  "#000000", // black
-  "#ffffff", // white
-  "#111827", // near-black (slate-900)
-  "#d1d5db", // light gray (gray-300)
-
-  // Reds / warm
-  "#7f1d1d", // deep red
-  "#ef4444", // red
-  "#fb7185", // coral / salmon
-  "#be123c", // raspberry (dark rose)
-
-  // Oranges / yellows (spaced by lightness + warmth)
-  "#c2410c", // burnt orange
-  "#f97316", // orange
-  "#f59e0b", // amber / gold
-  "#fde047", // bright yellow
-  "#a16207", // mustard / ochre
-
-  // Browns / tans (non-green earthy separation)
-  "#7c2d12", // deep brown
-  "#9a3412", // rust
-  "#e0c097", // tan / sand
-  "#fed7aa", // peach
-
-  // Pinks / magentas / purples (varied intensity)
-  "#ec4899", // hot pink
-  "#ff00ff", // pure magenta
-  "#d946ef", // fuchsia
-  "#a21caf", // deep fuchsia
-  "#7e22ce", // purple
-  "#581c87", // deep purple
-  "#7c3aed", // violet
-  "#c4b5fd", // lavender (light violet)
-
-  // Blues (kept “blue”, not cyan/teal)
-  "#1e3a8a", // navy
-  "#2563eb", // blue
-  "#60a5fa", // light blue
-  "#a5b4fc", // periwinkle (indigo-200)
-];
-
-
-
-const MAX_INCOME_CATEGORIES = 6;
-const MAX_EXPENSE_CATEGORIES = 26;
+interface ActionResult {
+  success: boolean;
+  error?: string;
+}
 
 export async function getCategories(): Promise<GetCategoriesResult> {
   try {
@@ -139,9 +93,8 @@ export async function getCategoriesByType(
 
 export async function createCategory(
   category: CategoryInsert
-): Promise<CreateCategoryResult> {
+): Promise<CategoryResult> {
   try {
-    // Validation
     if (!category.name || category.name.trim() === "") {
       return { success: false, error: "Category name is required" };
     }
@@ -150,7 +103,14 @@ export async function createCategory(
       return { success: false, error: "Invalid category type" };
     }
 
-    // Get existing categories for this user and type
+    if (!CATEGORY_COLORS.includes(category.color as typeof CATEGORY_COLORS[number])) {
+      return { success: false, error: "Invalid color selection" };
+    }
+
+    if (!CATEGORY_ICONS.includes(category.icon as typeof CATEGORY_ICONS[number])) {
+      return { success: false, error: "Invalid icon selection" };
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -160,72 +120,281 @@ export async function createCategory(
       return { success: false, error: "User not authenticated" };
     }
 
-    const { data: existingCategories, error: fetchError } = await supabase
-      .from("categories")
-      .select("color")
-      .eq("user_id", user.id)
-      .eq("category_type", category.category_type);
-
-    if (fetchError) {
-      return { success: false, error: fetchError.message };
-    }
-
-    // Check category limits
-    const categoryCount = existingCategories?.length || 0;
-    const maxCategories =
-      category.category_type === "income" ? MAX_INCOME_CATEGORIES : MAX_EXPENSE_CATEGORIES;
-
-    if (categoryCount >= maxCategories) {
-      return {
-        success: false,
-        error: `You have reached the maximum of ${maxCategories} ${category.category_type} categories. Please delete some categories before creating new ones.`,
-      };
-    }
-
-    // Get available colors for this category type
-    const colorPalette =
-      category.category_type === "income" ? INCOME_COLORS : EXPENSE_COLORS;
-    const usedColors = new Set(existingCategories?.map((c: { color: string }) => c.color) || []);
-    const availableColors = colorPalette.filter((color) => !usedColors.has(color));
-
-    if (availableColors.length === 0) {
-      return {
-        success: false,
-        error: "No available colors for this category type. Please delete some categories first.",
-      };
-    }
-
-    // Pick a random color from available colors
-    const randomColor =
-      availableColors[Math.floor(Math.random() * availableColors.length)];
-
-    // Insert category
     const { data, error } = await supabase
       .from("categories")
       .insert({
         name: category.name.trim(),
         category_type: category.category_type,
-        color: randomColor,
+        color: category.color,
+        icon: category.icon,
         user_id: user.id,
       })
       .select()
       .single();
 
     if (error) {
-      // Check for unique constraint violation
       if (error.code === "23505") {
         return {
           success: false,
-          error: "A category with this name already exists",
+          error: "A category with this name already exists for this type.",
         };
       }
       return { success: false, error: error.message };
     }
 
-    // Revalidate pages that show categories
     revalidatePath("/");
+    revalidatePath("/categories");
 
     return { success: true, data: data as Category };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
+}
+
+export async function updateCategory(
+  id: string,
+  fields: { name: string; color: string; icon: string }
+): Promise<CategoryResult> {
+  try {
+    if (!fields.name || fields.name.trim() === "") {
+      return { success: false, error: "Category name is required" };
+    }
+
+    if (!CATEGORY_COLORS.includes(fields.color as typeof CATEGORY_COLORS[number])) {
+      return { success: false, error: "Invalid color selection" };
+    }
+
+    if (!CATEGORY_ICONS.includes(fields.icon as typeof CATEGORY_ICONS[number])) {
+      return { success: false, error: "Invalid icon selection" };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    const { data, error } = await supabase
+      .from("categories")
+      .update({ name: fields.name.trim(), color: fields.color, icon: fields.icon })
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === "23505") {
+        return {
+          success: false,
+          error: "A category with this name already exists for this type.",
+        };
+      }
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/categories");
+
+    return { success: true, data: data as Category };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
+}
+
+export async function deleteCategory(id: string): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Load target category (also verifies ownership via user_id)
+    const { data: target, error: targetError } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
+
+    if (targetError || !target) {
+      return { success: false, error: "Category not found" };
+    }
+
+    // Check if transactions reference this category
+    const { count: txCount } = await supabase
+      .from("transactions")
+      .select("id", { count: "exact", head: true })
+      .eq("category_id", id);
+
+    const hasTransactions = (txCount ?? 0) > 0;
+
+    // Special guard: deleting Others when it has transactions
+    if (target.name === OTHERS_NAME && hasTransactions) {
+      return {
+        success: false,
+        error: "Use merge to move these transactions elsewhere first.",
+      };
+    }
+
+    if (hasTransactions) {
+      // Look for an existing Others category of same type
+      const { data: othersCategory } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("category_type", target.category_type)
+        .eq("name", OTHERS_NAME)
+        .single();
+
+      if (!othersCategory) {
+        // Rename target in place to become Others
+        await supabase
+          .from("categories")
+          .update({ name: OTHERS_NAME, color: OTHERS_COLOR, icon: OTHERS_ICON })
+          .eq("id", id);
+      } else {
+        // Reassign transactions and rules to existing Others, then delete target
+        await supabase
+          .from("transactions")
+          .update({ category_id: othersCategory.id })
+          .eq("category_id", id);
+
+        await supabase
+          .from("merchant_rules")
+          .update({ category_id: othersCategory.id })
+          .eq("category_id", id);
+
+        await supabase.from("categories").delete().eq("id", id);
+      }
+    } else {
+      // No transactions: update or delete merchant_rules then delete category
+      const { data: othersCategory } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("category_type", target.category_type)
+        .eq("name", OTHERS_NAME)
+        .single();
+
+      if (othersCategory) {
+        await supabase
+          .from("merchant_rules")
+          .update({ category_id: othersCategory.id })
+          .eq("category_id", id);
+      } else {
+        await supabase.from("merchant_rules").delete().eq("category_id", id);
+      }
+
+      await supabase.from("categories").delete().eq("id", id);
+    }
+
+    revalidatePath("/");
+    revalidatePath("/categories");
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
+}
+
+export async function mergeCategories(
+  sourceId: string,
+  targetId: string
+): Promise<ActionResult> {
+  try {
+    if (sourceId === targetId) {
+      return { success: false, error: "Source and target must be different categories" };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Load both categories and verify ownership
+    const { data: source } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("id", sourceId)
+      .eq("user_id", user.id)
+      .single();
+
+    const { data: target } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("id", targetId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (!source || !target) {
+      return { success: false, error: "Category not found" };
+    }
+
+    if (source.category_type !== target.category_type) {
+      return { success: false, error: "Cannot merge categories of different types" };
+    }
+
+    // Reassign transactions
+    await supabase
+      .from("transactions")
+      .update({ category_id: targetId })
+      .eq("category_id", sourceId);
+
+    // Reassign merchant_rules; delete source rule on (user_id, match_pattern) conflict
+    const { data: sourceRules } = await supabase
+      .from("merchant_rules")
+      .select("id, match_pattern")
+      .eq("category_id", sourceId);
+
+    if (sourceRules && sourceRules.length > 0) {
+      const { data: targetRules } = await supabase
+        .from("merchant_rules")
+        .select("match_pattern")
+        .eq("user_id", user.id)
+        .eq("category_id", targetId);
+
+      const targetPatterns = new Set((targetRules ?? []).map((r: { match_pattern: string }) => r.match_pattern));
+
+      for (const rule of sourceRules) {
+        if (targetPatterns.has(rule.match_pattern)) {
+          // Conflict: delete the source rule
+          await supabase.from("merchant_rules").delete().eq("id", rule.id);
+        } else {
+          await supabase
+            .from("merchant_rules")
+            .update({ category_id: targetId })
+            .eq("id", rule.id);
+        }
+      }
+    }
+
+    // Delete source category
+    await supabase.from("categories").delete().eq("id", sourceId);
+
+    revalidatePath("/");
+    revalidatePath("/categories");
+
+    return { success: true };
   } catch (error) {
     return {
       success: false,

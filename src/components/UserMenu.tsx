@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { LogOut, User } from 'lucide-react'
+import Link from 'next/link'
+import { LogOut, User, Tags } from 'lucide-react'
 import { useState } from 'react'
 
 interface UserMenuProps {
@@ -48,6 +49,16 @@ export default function UserMenu({ email }: UserMenuProps) {
                     <div className="px-4 py-2 text-xs text-gray-500 truncate">
                         {email}
                     </div>
+                    <Link
+                        href="/categories"
+                        onClick={() => setIsOpen(false)}
+                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                        tabIndex={-1}
+                    >
+                        <Tags className="mr-2 h-4 w-4" />
+                        Manage categories
+                    </Link>
                     <button
                         onClick={handleSignOut}
                         className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
