@@ -53,6 +53,7 @@ export function TransactionList({ transactions, categories }: TransactionListPro
                   currentCategoryId={transaction.categories?.id || null}
                   currentCategoryName={transaction.categories?.name || "Uncategorized"}
                   currentCategoryColor={transaction.categories?.color || "#9ca3af"}
+                  currentCategoryIcon={transaction.categories?.icon || "circle"}
                   categories={categories.filter(c => c.category_type === transaction.type)}
                 />
               </td>

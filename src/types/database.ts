@@ -6,8 +6,7 @@ export interface Category {
     name: string;
     category_type: TransactionType;
     color: string; // hex color code
-    icon: string;  // Lucide icon name
-    parent_id: string | null;
+    icon: string;  // Lucide icon name (kebab-case)
     created_at: string;
 }
 
@@ -15,8 +14,7 @@ export interface CategoryInsert {
     name: string;
     category_type: TransactionType;
     color: string;
-    icon?: string;
-    parent_id?: string | null;
+    icon: string;
 }
 
 export interface Transaction {

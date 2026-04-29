@@ -3,8 +3,9 @@
 import { addTransaction } from "@/app/actions/transaction-actions";
 import { getCategories, createCategory } from "@/app/actions/category-actions";
 import { TransactionType, Category } from "@/types/database";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { CategorySelector } from "./CategorySelector";
+import { CategoryForm } from "./CategoryForm";
 
 interface AddTransactionFormProps {
   onSuccess?: () => void;
@@ -14,7 +15,6 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<TransactionType>("expense");
   const [categoryId, setCategoryId] = useState("");
-  const [newCategoryName, setNewCategoryName] = useState("");
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [description, setDescription] = useState("");
@@ -22,11 +22,11 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [isCreatingSubmitting, setIsCreatingSubmitting] = useState(false);
 
   // Filter categories locally based on the selected type
-  const categories = useMemo(() => {
-    return allCategories.filter(cat => cat.category_type === type);
-  }, [allCategories, type]);
+  const categories = allCategories.filter((cat) => cat.category_type === type);
 
   // Fetch all categories once when the form mounts
   useEffect(() => {
@@ -41,33 +41,23 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
     loadCategories();
   }, []);
 
-  async function handleCreateCategory() {
-    if (!newCategoryName.trim()) {
-      setMessage({ type: "error", text: "Please enter a category name" });
-      setTimeout(() => setMessage(null), 3000);
-      return;
-    }
-
-    setIsSubmitting(true);
-    const result = await createCategory({
-      name: newCategoryName.trim(),
-      category_type: type,
-      color: "", // Server will assign color
-    });
-
-    setIsSubmitting(false);
+  async function handleCreateCategory(data: {
+    name: string;
+    category_type: TransactionType;
+    color: string;
+    icon: string;
+  }) {
+    setIsCreatingSubmitting(true);
+    setCreateError(null);
+    const result = await createCategory(data);
+    setIsCreatingSubmitting(false);
 
     if (result.success && result.data) {
-      // Add new category to allCategories list and select it
       setAllCategories([...allCategories, result.data]);
       setCategoryId(result.data.id);
       setIsCreatingCategory(false);
-      setNewCategoryName("");
-      setMessage({ type: "success", text: "Category created!" });
-      setTimeout(() => setMessage(null), 3000);
     } else {
-      setMessage({ type: "error", text: result.error || "Failed to create category" });
-      setTimeout(() => setMessage(null), 3000);
+      setCreateError(result.error ?? "Failed to create category");
     }
   }
 
@@ -75,14 +65,6 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage(null);
-
-    // If creating a new category, create it first
-    if (isCreatingCategory && newCategoryName.trim()) {
-      await handleCreateCategory();
-      // Don't submit transaction yet, let user confirm category was created
-      setIsSubmitting(false);
-      return;
-    }
 
     if (!categoryId) {
       setMessage({ type: "error", text: "Please select or create a category" });
@@ -103,27 +85,23 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
 
     if (result.success) {
       setMessage({ type: "success", text: "Transaction added successfully!" });
-      // Reset form
       setAmount("");
       setCategoryId("");
       setDescription("");
       setDate(getTodayDate());
 
-      // Notify parent of success
       if (onSuccess) {
-        setTimeout(() => onSuccess(), 1500); // Small delay to show success message
+        setTimeout(() => onSuccess(), 1500);
       }
     } else {
       setMessage({ type: "error", text: result.error || "Failed to add transaction" });
     }
 
-    // Clear message after 3 seconds
     setTimeout(() => setMessage(null), 3000);
   }
 
   return (
     <div className="bg-white dark:bg-zinc-950">
-
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Amount */}
@@ -151,35 +129,46 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
             </label>
             <div className="mt-1 grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg relative">
               <div
-                className={`absolute inset-y-1 w-[calc(50%-4px)] rounded-md shadow-sm transition-all duration-300 ease-in-out ${type === 'expense'
-                  ? 'translate-x-0 bg-red-500 dark:bg-red-600'
-                  : 'translate-x-full bg-emerald-500 dark:bg-emerald-600'
-                  }`}
+                className={`absolute inset-y-1 w-[calc(50%-4px)] rounded-md shadow-sm transition-all duration-300 ease-in-out ${
+                  type === "expense"
+                    ? "translate-x-0 bg-red-500 dark:bg-red-600"
+                    : "translate-x-full bg-emerald-500 dark:bg-emerald-600"
+                }`}
               />
               <label
-                className={`relative flex items-center justify-center py-2 text-sm font-bold cursor-pointer transition-colors duration-300 z-10 ${type === 'expense' ? 'text-white' : 'text-zinc-500 dark:text-zinc-400'
-                  }`}
+                className={`relative flex items-center justify-center py-2 text-sm font-bold cursor-pointer transition-colors duration-300 z-10 ${
+                  type === "expense" ? "text-white" : "text-zinc-500 dark:text-zinc-400"
+                }`}
               >
                 <input
                   type="radio"
                   name="transactionType"
                   value="expense"
-                  checked={type === 'expense'}
-                  onChange={() => { setType('expense'); setCategoryId(''); setIsCreatingCategory(false); setNewCategoryName(''); }}
+                  checked={type === "expense"}
+                  onChange={() => {
+                    setType("expense");
+                    setCategoryId("");
+                    setIsCreatingCategory(false);
+                  }}
                   className="sr-only"
                 />
                 Expense
               </label>
               <label
-                className={`relative flex items-center justify-center py-2 text-sm font-bold cursor-pointer transition-colors duration-300 z-10 ${type === 'income' ? 'text-white' : 'text-zinc-500 dark:text-zinc-400'
-                  }`}
+                className={`relative flex items-center justify-center py-2 text-sm font-bold cursor-pointer transition-colors duration-300 z-10 ${
+                  type === "income" ? "text-white" : "text-zinc-500 dark:text-zinc-400"
+                }`}
               >
                 <input
                   type="radio"
                   name="transactionType"
                   value="income"
-                  checked={type === 'income'}
-                  onChange={() => { setType('income'); setCategoryId(''); setIsCreatingCategory(false); setNewCategoryName(''); }}
+                  checked={type === "income"}
+                  onChange={() => {
+                    setType("income");
+                    setCategoryId("");
+                    setIsCreatingCategory(false);
+                  }}
                   className="sr-only"
                 />
                 Income
@@ -205,36 +194,17 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
             </div>
 
             {isCreatingCategory ? (
-              <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    autoFocus
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500"
-                    placeholder="Enter new category name"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCreateCategory}
-                    disabled={isSubmitting || !newCategoryName.trim()}
-                    className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 disabled:opacity-50 transition-colors"
-                  >
-                    Create
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCreatingCategory(false);
-                      setNewCategoryName("");
-                    }}
-                    className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
+              <CategoryForm
+                mode="create"
+                lockedType={type}
+                onSubmit={handleCreateCategory}
+                onCancel={() => {
+                  setIsCreatingCategory(false);
+                  setCreateError(null);
+                }}
+                isSubmitting={isCreatingSubmitting}
+                error={createError}
+              />
             ) : (
               <CategorySelector
                 categories={categories}
@@ -286,13 +256,13 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
             {isSubmitting ? "Adding..." : "Add Transaction"}
           </button>
 
-          {/* Success/Error Message */}
           {message && (
             <div
-              className={`text-sm font-medium ${message.type === "success"
-                ? "text-green-600 dark:text-green-400"
-                : "text-red-600 dark:text-red-400"
-                }`}
+              className={`text-sm font-medium ${
+                message.type === "success"
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}
             >
               {message.text}
             </div>

@@ -1,5 +1,6 @@
 import { getDashboardSummary } from "@/app/actions/transaction-actions";
 import { BalanceTrendsChart } from "@/components/BalanceTrendsChart";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { formatCurrency } from "@/lib/format";
 import { ArrowDownRight, ArrowUpRight, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
@@ -131,6 +132,7 @@ interface CategoryBreakdownListProps {
   readonly items: Array<{
     name: string;
     color: string | null;
+    icon: string;
     total: number;
   }>;
 }
@@ -150,13 +152,22 @@ function CategoryBreakdownList({ title, items }: CategoryBreakdownListProps) {
           items.map((item) => {
             const percent = total > 0 ? (item.total / total) * 100 : 0;
             const percentLabel = `${percent.toFixed(1)}%`;
+            const color = item.color || "#9ca3af";
             return (
               <div key={`${title}-${item.name}`} className="group space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-zinc-700 dark:text-zinc-200">
-                    {item.name}
+                <div className="flex items-center justify-between text-sm gap-2">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: color }}
+                    >
+                      <CategoryIcon name={item.icon} size={11} color="white" />
+                    </span>
+                    <span className="truncate text-zinc-700 dark:text-zinc-200">
+                      {item.name}
+                    </span>
                   </span>
-                  <span className="text-zinc-500 dark:text-zinc-400">
+                  <span className="text-zinc-500 dark:text-zinc-400 flex-shrink-0">
                     {formatCurrency(item.total)}
                   </span>
                 </div>
@@ -166,7 +177,7 @@ function CategoryBreakdownList({ title, items }: CategoryBreakdownListProps) {
                     title={percentLabel}
                     style={{
                       width: `${Math.max(Math.round(percent), 2)}%`,
-                      backgroundColor: item.color || "#9ca3af",
+                      backgroundColor: color,
                     }}
                   />
                 </div>

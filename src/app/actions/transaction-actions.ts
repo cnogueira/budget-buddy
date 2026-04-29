@@ -13,7 +13,7 @@ type MonthTransaction = {
   amount: number;
   type: TransactionType;
   category_id: string | null;
-  categories: Pick<Category, 'name' | 'color'> | Pick<Category, 'name' | 'color'>[] | null;
+  categories: Pick<Category, 'name' | 'color' | 'icon'> | Pick<Category, 'name' | 'color' | 'icon'>[] | null;
 };
 
 interface GetTransactionsResult {
@@ -40,6 +40,7 @@ interface CategoryBreakdownItem {
   categoryId: string | null;
   name: string;
   color: string | null;
+  icon: string;
   total: number;
   type: TransactionType;
 }
@@ -218,7 +219,7 @@ export async function getDashboardSummary(month?: string): Promise<GetDashboardS
 
     const { data: monthTransactions, error: monthError } = await supabase
       .from("transactions")
-      .select("amount, type, category_id, categories(name, color)")
+      .select("amount, type, category_id, categories(name, color, icon)")
       .eq("user_id", user.id)
       .gte("date", startOfMonthString)
       .lte("date", endOfMonthString);
@@ -318,6 +319,7 @@ function buildCategoryBreakdown(
 
     const name = categoryData?.name || "Uncategorized";
     const color = categoryData?.color || null;
+    const icon = categoryData?.icon || "circle";
 
     const existing = breakdownMap.get(id);
     if (existing) {
@@ -329,6 +331,7 @@ function buildCategoryBreakdown(
       categoryId: transaction.category_id,
       name,
       color,
+      icon,
       total: transaction.amount,
       type: transaction.type,
     });
