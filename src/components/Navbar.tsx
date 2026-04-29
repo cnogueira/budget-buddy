@@ -11,13 +11,13 @@ export default async function Navbar() {
     } = await supabase.auth.getUser()
 
     return (
-        <nav className="border-b border-gray-200 bg-white">
+        <nav className="border-b border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="flex h-16 justify-between">
                     <div className="flex items-center gap-6">
                         <Link href="/" className="flex flex-shrink-0 items-center gap-2">
                             <Wallet className="h-8 w-8 text-blue-600" />
-                            <span className="text-xl font-bold text-gray-900">Budget Buddy</span>
+                            <span className="text-xl font-bold text-gray-900 dark:text-zinc-50">Budget Buddy</span>
                         </Link>
                         {user && <NavLinks />}
                     </div>
@@ -27,7 +27,7 @@ export default async function Navbar() {
                         ) : (
                             <Link
                                 href="/login"
-                                className="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600"
+                                className="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600 dark:text-zinc-50 dark:hover:text-blue-400"
                             >
                                 Log in <span aria-hidden="true">&rarr;</span>
                             </Link>
