@@ -72,7 +72,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-black px-4 py-12 sm:px-6 lg:px-8">
+        <div className="flex min-h-full flex-col items-center justify-center bg-gray-50 dark:bg-black px-4 py-12 sm:px-6 lg:px-8">
             <div className="w-full max-w-md space-y-6">
                 <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-zinc-50">
                     Sign in to Budget Buddy

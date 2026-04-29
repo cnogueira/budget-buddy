@@ -1,6 +1,6 @@
 export default function TermsPage() {
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-black px-4 py-12 sm:px-6 lg:px-8">
+        <div className="bg-gray-50 dark:bg-black px-4 py-12 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl space-y-8">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-zinc-50">Terms of Service</h1>
