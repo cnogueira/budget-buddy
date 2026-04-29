@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const links = [
-    { label: "Dashboard", href: "/" },
+    { label: "Overview", href: "/overview" },
     { label: "Transactions", href: "/transactions" },
     { label: "Categories", href: "/categories" },
 ];
@@ -15,7 +15,7 @@ export function NavLinks() {
     return (
         <div className="flex h-16 items-stretch gap-1">
             {links.map(({ label, href }) => {
-                const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+                const isActive = pathname.startsWith(href);
                 return (
                     <Link
                         key={href}
