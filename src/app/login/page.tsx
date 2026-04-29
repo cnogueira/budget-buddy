@@ -72,16 +72,16 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-black px-4 py-12 sm:px-6 lg:px-8">
             <div className="w-full max-w-md space-y-6">
-                <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
+                <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-zinc-50">
                     Sign in to Budget Buddy
                 </h2>
 
                 <button
                     onClick={handleGoogleSignIn}
                     disabled={isGoogleLoading}
-                    className="flex w-full items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                     {isGoogleLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -98,19 +98,19 @@ export default function LoginPage() {
 
                 <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300" />
+                        <div className="w-full border-t border-gray-300 dark:border-zinc-700" />
                     </div>
                     <div className="relative flex justify-center text-sm">
-                        <span className="bg-gray-50 px-2 text-gray-500">or</span>
+                        <span className="bg-gray-50 px-2 text-gray-500 dark:bg-black dark:text-zinc-400">or</span>
                     </div>
                 </div>
 
                 <button
                     onClick={() => setShowEmailForm(!showEmailForm)}
-                    className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                     <span>Sign in with email</span>
-                    <span className="text-gray-400">{showEmailForm ? '▲' : '▾'}</span>
+                    <span className="text-gray-400 dark:text-zinc-500">{showEmailForm ? '▲' : '▾'}</span>
                 </button>
 
                 {showEmailForm && (
@@ -124,7 +124,7 @@ export default function LoginPage() {
                                     type="email"
                                     autoComplete="email"
                                     required
-                                    className="relative block w-full rounded-t-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3"
+                                    className="relative block w-full rounded-t-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-700 dark:placeholder:text-zinc-500 dark:focus:ring-blue-500"
                                     placeholder="Email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -138,7 +138,7 @@ export default function LoginPage() {
                                     type="password"
                                     autoComplete="current-password"
                                     required
-                                    className="relative block w-full rounded-b-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3"
+                                    className="relative block w-full rounded-b-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-700 dark:placeholder:text-zinc-500 dark:focus:ring-blue-500"
                                     placeholder="Password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -147,14 +147,14 @@ export default function LoginPage() {
                         </div>
 
                         {error && (
-                            <div className="rounded-md bg-red-50 p-4">
-                                <p className="text-sm font-medium text-red-800">{error}</p>
+                            <div className="rounded-md bg-red-50 p-4 dark:bg-red-950">
+                                <p className="text-sm font-medium text-red-800 dark:text-red-300">{error}</p>
                             </div>
                         )}
 
                         {message && (
-                            <div className="rounded-md bg-green-50 p-4">
-                                <p className="text-sm font-medium text-green-800">{message}</p>
+                            <div className="rounded-md bg-green-50 p-4 dark:bg-green-950">
+                                <p className="text-sm font-medium text-green-800 dark:text-green-300">{message}</p>
                             </div>
                         )}
 
@@ -167,7 +167,7 @@ export default function LoginPage() {
                             {mode === 'signin' ? 'Sign in' : 'Sign up'}
                         </button>
 
-                        <p className="text-center text-sm text-gray-600">
+                        <p className="text-center text-sm text-gray-600 dark:text-zinc-400">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -177,7 +177,7 @@ export default function LoginPage() {
                                     setEmail('')
                                     setPassword('')
                                 }}
-                                className="font-medium text-blue-600 hover:text-blue-500"
+                                className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                             >
                                 {mode === 'signin' ? 'Or sign up instead' : 'Or sign in instead'}
                             </button>
