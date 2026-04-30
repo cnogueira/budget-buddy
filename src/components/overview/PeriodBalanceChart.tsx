@@ -62,13 +62,19 @@ function buildSeries(transactions: OverviewTransaction[], granularity: Granulari
     return { label: bucketLabel(key, granularity), balance: Math.round(running * 100) / 100 };
   });
 
-  // Always anchor the series at balance=0 on the period start date.
-  // Skip the synthetic point only if the first transaction falls in the same
-  // bucket (identical X label), which would otherwise create a duplicate tick.
-  if (txPoints.length === 0 || keys[0] !== startKey) {
+  if (txPoints.length === 0) {
+    return [{ label: startLabel, balance: 0 }];
+  }
+
+  if (keys[0] !== startKey) {
+    // First transaction is after the period start — show a labeled 0 anchor.
     return [{ label: startLabel, balance: 0 }, ...txPoints];
   }
-  return txPoints;
+
+  // First transaction falls in the same bucket as the period start.
+  // Use an unlabeled anchor so the chart starts at 0 and immediately
+  // rises/falls to the first value, without creating a duplicate X tick.
+  return [{ label: "", balance: 0 }, ...txPoints];
 }
 
 function formatEUR(v: number) {
