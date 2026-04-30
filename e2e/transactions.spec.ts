@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { addTransaction } from './helpers/transactions';
 
 test('can add a transaction', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/transactions');
 
   const marker = await addTransaction(page);
 
@@ -10,7 +10,7 @@ test('can add a transaction', async ({ page }) => {
 });
 
 test('can delete a transaction', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/transactions');
 
   const marker = await addTransaction(page);
 
