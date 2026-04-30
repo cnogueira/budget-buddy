@@ -13,7 +13,7 @@ interface PeriodCategoryWidgetProps {
 }
 
 const RADIAN = Math.PI / 180;
-const ICON_R = 14;
+const ICON_R = 13;
 
 export function PeriodCategoryWidget({ type, categoryBreakdown, from, to }: PeriodCategoryWidgetProps) {
   const items = categoryBreakdown.filter((c) => c.type === type).sort((a, b) => b.total - a.total);
@@ -29,20 +29,27 @@ export function PeriodCategoryWidget({ type, categoryBreakdown, from, to }: Peri
     icon: c.icon,
   }));
 
-  // Renders a circular icon badge at the outer edge of each slice.
-  // Uses foreignObject so we can embed the React CategoryIcon SVG component.
+  // Renders a circular icon badge + percentage at the outer edge of each slice.
   function renderIconLabel(props: PieLabelRenderProps) {
     const cx = Number(props.cx ?? 0);
     const cy = Number(props.cy ?? 0);
     const midAngle = Number(props.midAngle ?? 0);
     const outerRadius = Number(props.outerRadius ?? 0);
     const index = Number(props.index ?? 0);
+    const percent = Number(props.percent ?? 0);
     const entry = pieData[index];
     if (!entry) return null;
 
-    const radius = outerRadius + ICON_R + 6;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const angle = -midAngle * RADIAN;
+    const iconRadius = outerRadius + ICON_R + 6;
+    const x = cx + iconRadius * Math.cos(angle);
+    const y = cy + iconRadius * Math.sin(angle);
+
+    // Percentage text placed further along the same radial line
+    const pctRadius = iconRadius + ICON_R + 9;
+    const pctX = cx + pctRadius * Math.cos(angle);
+    const pctY = cy + pctRadius * Math.sin(angle);
+    const pct = (percent * 100).toFixed(1) + "%";
 
     return (
       <g key={`icon-label-${index}`}>
@@ -54,15 +61,25 @@ export function PeriodCategoryWidget({ type, categoryBreakdown, from, to }: Peri
           height={ICON_R * 2}
           style={{ pointerEvents: "none" }}
         >
-          {/* xmlns required to embed HTML inside SVG foreignObject */}
           <div
-            // @ts-expect-error — xmlns is a valid SVG attribute not typed in React's HTMLAttributes
+            // @ts-expect-error — xmlns is a valid SVG foreignObject attribute
             xmlns="http://www.w3.org/1999/xhtml"
             style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}
           >
-            <CategoryIcon name={entry.icon} size={14} color="white" />
+            <CategoryIcon name={entry.icon} size={13} color="white" />
           </div>
         </foreignObject>
+        <text
+          x={pctX}
+          y={pctY}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={10}
+          fontWeight={600}
+          fill="#71717a"
+        >
+          {pct}
+        </text>
       </g>
     );
   }
@@ -80,16 +97,15 @@ export function PeriodCategoryWidget({ type, categoryBreakdown, from, to }: Peri
         </div>
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
                 data={pieData}
                 cx="50%"
                 cy="50%"
-                innerRadius={52}
-                outerRadius={78}
+                innerRadius={46}
+                outerRadius={70}
                 dataKey="value"
-                paddingAngle={2}
                 stroke="none"
                 label={renderIconLabel}
                 labelLine={false}
