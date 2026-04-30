@@ -11,6 +11,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { OverviewTransaction } from "@/types/database";
+import { formatDateRange } from "@/lib/format";
 
 type Granularity = "days" | "weeks" | "months";
 
@@ -91,7 +92,7 @@ export function PeriodBalanceChart({ transactions, from, to }: PeriodBalanceChar
   const [granularity, setGranularity] = useState<Granularity>("days");
   const data = buildSeries(transactions, granularity, from);
 
-  const dateSubtitle = `${from} – ${to}`;
+  const dateSubtitle = formatDateRange(from, to);
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">

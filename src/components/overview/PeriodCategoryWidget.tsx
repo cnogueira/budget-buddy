@@ -1,8 +1,9 @@
 "use client";
 
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, PieLabelRenderProps } from "recharts";
 import { OverviewCategoryItem, TransactionType } from "@/types/database";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { formatDateRange } from "@/lib/format";
 
 interface PeriodCategoryWidgetProps {
   type: TransactionType;
@@ -10,6 +11,9 @@ interface PeriodCategoryWidgetProps {
   from: string;
   to: string;
 }
+
+const RADIAN = Math.PI / 180;
+const ICON_R = 14;
 
 export function PeriodCategoryWidget({ type, categoryBreakdown, from, to }: PeriodCategoryWidgetProps) {
   const items = categoryBreakdown.filter((c) => c.type === type).sort((a, b) => b.total - a.total);
@@ -22,13 +26,52 @@ export function PeriodCategoryWidget({ type, categoryBreakdown, from, to }: Peri
     name: c.name,
     value: c.total,
     color: c.color ?? "#a1a1aa",
+    icon: c.icon,
   }));
+
+  // Renders a circular icon badge at the outer edge of each slice.
+  // Uses foreignObject so we can embed the React CategoryIcon SVG component.
+  function renderIconLabel(props: PieLabelRenderProps) {
+    const cx = Number(props.cx ?? 0);
+    const cy = Number(props.cy ?? 0);
+    const midAngle = Number(props.midAngle ?? 0);
+    const outerRadius = Number(props.outerRadius ?? 0);
+    const index = Number(props.index ?? 0);
+    const entry = pieData[index];
+    if (!entry) return null;
+
+    const radius = outerRadius + ICON_R + 6;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <g key={`icon-label-${index}`}>
+        <circle cx={x} cy={y} r={ICON_R} fill={entry.color} />
+        <foreignObject
+          x={x - ICON_R}
+          y={y - ICON_R}
+          width={ICON_R * 2}
+          height={ICON_R * 2}
+          style={{ pointerEvents: "none" }}
+        >
+          {/* xmlns required to embed HTML inside SVG foreignObject */}
+          <div
+            // @ts-expect-error — xmlns is a valid SVG attribute not typed in React's HTMLAttributes
+            xmlns="http://www.w3.org/1999/xhtml"
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}
+          >
+            <CategoryIcon name={entry.icon} size={14} color="white" />
+          </div>
+        </foreignObject>
+      </g>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mb-4">
         <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">{title}</h3>
-        <p className="text-xs text-zinc-400">{from} – {to}</p>
+        <p className="text-xs text-zinc-400">{formatDateRange(from, to)}</p>
       </div>
 
       {items.length === 0 ? (
@@ -37,16 +80,19 @@ export function PeriodCategoryWidget({ type, categoryBreakdown, from, to }: Peri
         </div>
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie
                 data={pieData}
                 cx="50%"
                 cy="50%"
-                innerRadius={50}
-                outerRadius={80}
+                innerRadius={52}
+                outerRadius={78}
                 dataKey="value"
                 paddingAngle={2}
+                stroke="none"
+                label={renderIconLabel}
+                labelLine={false}
               >
                 {pieData.map((entry, index) => (
                   <Cell key={index} fill={entry.color} />
@@ -54,30 +100,30 @@ export function PeriodCategoryWidget({ type, categoryBreakdown, from, to }: Peri
               </Pie>
               <Tooltip
                 formatter={(v, name) => [`${Number(v).toFixed(2)} €`, String(name)]}
-                contentStyle={{ fontSize: 12 }}
+                contentStyle={{ fontSize: 12, border: "none", borderRadius: "8px" }}
               />
             </PieChart>
           </ResponsiveContainer>
 
-          <div className="mt-4 flex flex-col gap-2 max-h-48 overflow-y-auto">
+          <div className="mt-2 flex flex-col gap-2 max-h-48 overflow-y-auto">
             {items.map((c) => {
               const pct = total > 0 ? ((c.total / total) * 100).toFixed(1) : "0.0";
               return (
                 <div key={c.categoryId ?? c.name} className="flex items-center gap-2">
                   <span
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
                     style={{ backgroundColor: c.color ?? "#a1a1aa" }}
                   >
-                    <CategoryIcon name={c.icon} size={14} color="white" />
+                    <CategoryIcon name={c.icon} size={12} color="white" />
                   </span>
                   <span className="flex-1 text-sm text-zinc-700 dark:text-zinc-300 truncate">{c.name}</span>
                   <span className="text-xs text-zinc-400 shrink-0">
-                    {c.count} {c.count === 1 ? "transaction" : "transactions"}
+                    {c.count} {c.count === 1 ? "tx" : "txs"}
                   </span>
                   <span className={`text-sm font-medium shrink-0 ${amountColor}`}>
                     {sign}{c.total.toFixed(2)} €
                   </span>
-                  <span className="text-xs text-zinc-400 w-12 text-right shrink-0">{pct}%</span>
+                  <span className="text-xs text-zinc-400 w-10 text-right shrink-0">{pct}%</span>
                 </div>
               );
             })}

@@ -12,6 +12,7 @@ import {
   Legend,
 } from "recharts";
 import { OverviewTransaction } from "@/types/database";
+import { formatDateRange } from "@/lib/format";
 
 type Granularity = "days" | "weeks" | "months";
 
@@ -78,7 +79,7 @@ export function ChangesChart({ transactions, from, to }: ChangesChartProps) {
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">Changes</h3>
-          <p className="text-xs text-zinc-400">{from} – {to}</p>
+          <p className="text-xs text-zinc-400">{formatDateRange(from, to)}</p>
         </div>
         <div className="flex rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden text-xs">
           {GRANULARITIES.map((g) => (
