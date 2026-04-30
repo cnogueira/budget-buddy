@@ -58,6 +58,7 @@ export function DateRangeNav({ from, to }: DateRangeNavProps) {
       <button
         type="button"
         onClick={shiftBack}
+        aria-label="Go to previous period"
         className="flex items-center justify-center rounded-lg border border-zinc-200 bg-white p-2 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -69,6 +70,7 @@ export function DateRangeNav({ from, to }: DateRangeNavProps) {
         <button
           type="button"
           onClick={shiftForward}
+          aria-label="Go to next period"
           className="flex items-center justify-center rounded-lg border border-zinc-200 bg-white p-2 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
         >
           <ChevronRight className="h-4 w-4" />
