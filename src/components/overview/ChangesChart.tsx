@@ -105,13 +105,13 @@ export function ChangesChart({ transactions, from, to }: ChangesChartProps) {
       ) : (
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={data} margin={{ top: 4, right: 4, left: 8, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+            <CartesianGrid vertical={false} stroke="rgba(161,161,170,0.2)" strokeDasharray="4 4" />
             <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#a1a1aa" }} tickLine={false} axisLine={false} />
             <YAxis tickFormatter={(v) => `${v}€`} tick={{ fontSize: 11, fill: "#a1a1aa" }} tickLine={false} axisLine={false} width={60} />
-            <Tooltip formatter={(v, name) => [`${Number(v).toFixed(2)} €`, name === "income" ? "Income" : "Expense"]} contentStyle={{ fontSize: 12 }} />
+            <Tooltip formatter={(v, name) => [`${Number(v).toFixed(2)} €`, name === "income" ? "Income" : "Expense"]} contentStyle={{ fontSize: 12, border: "none", borderRadius: "8px" }} />
             <Legend formatter={(v) => v === "income" ? "Income" : "Expense"} />
-            <Bar dataKey="income" fill="#22c55e" radius={[3, 3, 0, 0]} maxBarSize={40} />
-            <Bar dataKey="expense" fill="#ef4444" radius={[3, 3, 0, 0]} maxBarSize={40} />
+            <Bar dataKey="income" fill="#22c55e" stroke="none" radius={[3, 3, 0, 0]} maxBarSize={40} />
+            <Bar dataKey="expense" fill="#ef4444" stroke="none" radius={[3, 3, 0, 0]} maxBarSize={40} />
           </BarChart>
         </ResponsiveContainer>
       )}

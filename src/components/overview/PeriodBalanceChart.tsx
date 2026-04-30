@@ -44,7 +44,7 @@ function bucketLabel(key: string, granularity: Granularity): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function buildSeries(transactions: OverviewTransaction[], granularity: Granularity) {
+function buildSeries(transactions: OverviewTransaction[], granularity: Granularity, periodFrom: string) {
   const netByBucket = new Map<string, number>();
   for (const t of transactions) {
     const key = bucketKey(t.date, granularity);
@@ -52,12 +52,23 @@ function buildSeries(transactions: OverviewTransaction[], granularity: Granulari
     netByBucket.set(key, (netByBucket.get(key) ?? 0) + delta);
   }
 
+  const startKey = bucketKey(periodFrom, granularity);
+  const startLabel = bucketLabel(startKey, granularity);
+
   const keys = Array.from(netByBucket.keys()).sort();
   let running = 0;
-  return keys.map((key) => {
+  const txPoints = keys.map((key) => {
     running += netByBucket.get(key)!;
     return { label: bucketLabel(key, granularity), balance: Math.round(running * 100) / 100 };
   });
+
+  // Always anchor the series at balance=0 on the period start date.
+  // Skip the synthetic point only if the first transaction falls in the same
+  // bucket (identical X label), which would otherwise create a duplicate tick.
+  if (txPoints.length === 0 || keys[0] !== startKey) {
+    return [{ label: startLabel, balance: 0 }, ...txPoints];
+  }
+  return txPoints;
 }
 
 function formatEUR(v: number) {
@@ -72,7 +83,7 @@ const GRANULARITIES: { key: Granularity; label: string }[] = [
 
 export function PeriodBalanceChart({ transactions, from, to }: PeriodBalanceChartProps) {
   const [granularity, setGranularity] = useState<Granularity>("days");
-  const data = buildSeries(transactions, granularity);
+  const data = buildSeries(transactions, granularity, from);
 
   const dateSubtitle = `${from} – ${to}`;
 
@@ -86,21 +97,21 @@ export function PeriodBalanceChart({ transactions, from, to }: PeriodBalanceChar
         <GranularityToggle value={granularity} onChange={setGranularity} />
       </div>
 
-      {data.length === 0 ? (
+      {transactions.length === 0 ? (
         <EmptyState />
       ) : (
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={data} margin={{ top: 4, right: 4, left: 8, bottom: 0 }}>
             <defs>
               <linearGradient id="balanceFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
+                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.15} />
                 <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+            <CartesianGrid vertical={false} stroke="rgba(161,161,170,0.2)" strokeDasharray="4 4" />
             <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#a1a1aa" }} tickLine={false} axisLine={false} />
             <YAxis tickFormatter={(v) => `${v}€`} tick={{ fontSize: 11, fill: "#a1a1aa" }} tickLine={false} axisLine={false} width={60} />
-            <Tooltip formatter={(v) => [formatEUR(Number(v)), "Balance"]} contentStyle={{ fontSize: 12 }} />
+            <Tooltip formatter={(v) => [formatEUR(Number(v)), "Balance"]} contentStyle={{ fontSize: 12, border: "none", borderRadius: "8px" }} />
             <Area type="monotone" dataKey="balance" stroke="#22c55e" strokeWidth={2} fill="url(#balanceFill)" dot={false} />
           </AreaChart>
         </ResponsiveContainer>
