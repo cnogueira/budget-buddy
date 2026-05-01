@@ -46,7 +46,7 @@ export function PeriodCategoryWidget({ type, categoryBreakdown, from, to }: Peri
     const y = cy + iconRadius * Math.sin(angle);
 
     // Percentage text placed further along the same radial line
-    const pctRadius = iconRadius + ICON_R + 9;
+    const pctRadius = iconRadius + ICON_R + 18;
     const pctX = cx + pctRadius * Math.cos(angle);
     const pctY = cy + pctRadius * Math.sin(angle);
     const pct = (percent * 100).toFixed(1) + "%";
