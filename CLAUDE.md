@@ -110,6 +110,10 @@ There is no test runner configured beyond `bbva-parser.test.ts` (which appears t
 - Temporary docs, notes, and instructions go in `temp/`.
 - Do not create multiple instruction files for a single feature.
 
+### GitHub Workflow
+
+- **Never resolve review threads.** When addressing PR review comments, push the fix and reply to each thread with a comment explaining what was changed. Do not call `resolveReviewThread`. If the user explicitly asks to resolve a thread, double-check with them before doing so.
+
 ### Planning Workflow
 
 When asked to plan a new feature, follow this flow:
