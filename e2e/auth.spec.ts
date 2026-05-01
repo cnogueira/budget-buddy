@@ -15,6 +15,8 @@ test('can sign in with email and password', async ({ page }) => {
   await page.getByLabel('Password').fill(process.env.TEST_USER_PASSWORD!);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/overview');
+
+  await page.goto('/transactions');
   await expect(page.getByRole('button', { name: 'Add Transaction' })).toBeVisible();
 });

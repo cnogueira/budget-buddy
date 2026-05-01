@@ -54,6 +54,7 @@ export async function updateTransactionCategory(transactionId: string, categoryI
         }
     }
 
-    revalidatePath('/');
+    revalidatePath('/transactions');
+    revalidatePath('/overview');
     return { success: true };
 }

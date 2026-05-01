@@ -107,6 +107,7 @@ export async function importTransactions(formData: FormData): Promise<ImportResu
         }
     }
 
-    revalidatePath('/');
+    revalidatePath('/transactions');
+    revalidatePath('/overview');
     return { success: true, count: importedCount, duplicateCount };
 }
