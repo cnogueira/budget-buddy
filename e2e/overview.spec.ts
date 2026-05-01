@@ -55,9 +55,16 @@ test('selecting Last month preset updates the URL range', async ({ page }) => {
   await page.getByText('Last month').click();
   await page.getByRole('button', { name: 'Select' }).click();
 
-  // Last month from today (Apr 2026) is March 2026 → from=2026-03-01
-  await expect(page).toHaveURL(/from=2026-03-01/);
-  await expect(page).toHaveURL(/to=2026-03-31/);
+  const now = new Date();
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const y = lastMonth.getFullYear();
+  const m = String(lastMonth.getMonth() + 1).padStart(2, '0');
+  const lastDay = new Date(y, lastMonth.getMonth() + 1, 0).getDate();
+  const from = `${y}-${m}-01`;
+  const to = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
+
+  await expect(page).toHaveURL(new RegExp(`from=${from}`));
+  await expect(page).toHaveURL(new RegExp(`to=${to}`));
 });
 
 test('date picker closes without changing URL when dismissed', async ({ page }) => {

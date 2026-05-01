@@ -3,13 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DateRangeNav } from "@/components/DateRangeNav";
 import { OverviewContent, OverviewSkeleton } from "./OverviewContent";
-
-function toISODate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+import { toISODate } from "@/lib/format";
 
 function defaultRange(): { from: Date; to: Date } {
   const now = new Date();

@@ -4,13 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AddTransactionButton } from "@/components/AddTransactionButton";
 import { ImportTransactionsButton } from "@/components/ImportTransactionsButton";
 import { TransactionsContent, TransactionsSkeleton } from "./TransactionsContent";
-
-function toISODate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+import { toISODate } from "@/lib/format";
 
 function defaultRange(): { from: Date; to: Date } {
   const now = new Date();

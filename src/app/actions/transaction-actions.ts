@@ -22,7 +22,7 @@ interface ActionResult {
 export async function getTransactionsByRange(
   start: string,
   end: string,
-  filters?: { categoryIds?: string[] }
+  filters?: { categoryIds?: string[]; sort?: "asc" | "desc" }
 ): Promise<GetTransactionsResult> {
   try {
     const supabase = await createClient();
@@ -40,7 +40,7 @@ export async function getTransactionsByRange(
       .eq("user_id", user.id)
       .gte("date", start)
       .lte("date", end)
-      .order("date", { ascending: false });
+      .order("date", { ascending: filters?.sort === "asc" });
 
     if (filters?.categoryIds && filters.categoryIds.length > 0) {
       query = query.in("category_id", filters.categoryIds);

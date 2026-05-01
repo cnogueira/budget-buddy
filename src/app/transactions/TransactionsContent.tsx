@@ -20,7 +20,7 @@ export async function TransactionsContent({
   toDate,
 }: TransactionsContentProps) {
   const [txResult, catResult] = await Promise.all([
-    getTransactionsByRange(start, end, { categoryIds: categoryIds.length ? categoryIds : undefined }),
+    getTransactionsByRange(start, end, { categoryIds: categoryIds.length ? categoryIds : undefined, sort }),
     getCategories(),
   ]);
 

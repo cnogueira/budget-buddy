@@ -1,7 +1,5 @@
 "use client";
 
-import { useRef } from "react";
-
 interface AmountRangeSliderProps {
   min: number;
   max: number;
@@ -10,7 +8,6 @@ interface AmountRangeSliderProps {
 }
 
 export function AmountRangeSlider({ min, max, value, onChange }: AmountRangeSliderProps) {
-  const rangeRef = useRef<HTMLDivElement>(null);
   const [low, high] = value;
   const span = max - min || 1;
 
@@ -30,7 +27,7 @@ export function AmountRangeSlider({ min, max, value, onChange }: AmountRangeSlid
   return (
     <div className="flex flex-col gap-1 min-w-48">
       <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Amount</span>
-      <div ref={rangeRef} className="relative h-5 flex items-center">
+      <div className="relative h-5 flex items-center">
         {/* Track */}
         <div className="absolute inset-x-0 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700" />
         {/* Active track */}

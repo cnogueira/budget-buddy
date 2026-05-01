@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ArrowUpDown } from "lucide-react";
 import { Category, TransactionWithCategory } from "@/types/database";
@@ -8,6 +8,7 @@ import { DateRangePicker, DateRange } from "@/components/DateRangePicker";
 import { AmountRangeSlider } from "./AmountRangeSlider";
 import { CategoryMultiSelect } from "./CategoryMultiSelect";
 import { TransactionList } from "@/components/TransactionList";
+import { toISODate } from "@/lib/format";
 
 interface TransactionFiltersProps {
   categories: Category[];
@@ -18,13 +19,6 @@ interface TransactionFiltersProps {
   initialSort: "asc" | "desc";
   amountMin: number;
   amountMax: number;
-}
-
-function toISODate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 export function TransactionFilters({
@@ -44,20 +38,17 @@ export function TransactionFilters({
   const [amountRange, setAmountRange] = useState<[number, number]>([amountMin, amountMax]);
   const sort = initialSort;
 
-  const updateParams = useCallback(
-    (updates: Record<string, string | null>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [key, val] of Object.entries(updates)) {
-        if (val === null || val === "") {
-          params.delete(key);
-        } else {
-          params.set(key, val);
-        }
+  function updateParams(updates: Record<string, string | null>) {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, val] of Object.entries(updates)) {
+      if (val === null || val === "") {
+        params.delete(key);
+      } else {
+        params.set(key, val);
       }
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [router, pathname, searchParams]
-  );
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   function handleDateChange(range: DateRange) {
     updateParams({ from: toISODate(range.from), to: toISODate(range.to) });
@@ -76,8 +67,7 @@ export function TransactionFilters({
     (t) => t.amount >= amountRange[0] && t.amount <= amountRange[1]
   );
 
-  const sorted =
-    sort === "asc" ? [...filtered].reverse() : filtered;
+  const sorted = filtered;
 
   return (
     <div className="flex flex-col gap-4">
