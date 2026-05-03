@@ -28,21 +28,6 @@ test('range navigation keeps content visible without skeleton flash', async ({ p
   await expect(page.getByText('Changes')).toBeVisible();
 });
 
-test('cache is cleared on sign out', async ({ page }) => {
-  await page.goto('/overview');
-  await expect(page.getByText('Period Balance')).toBeVisible();
-
-  const keysBefore = await page.evaluate(() => Object.keys(localStorage));
-  expect(keysBefore.some((k) => k.startsWith('budget-buddy:cache:'))).toBe(true);
-
-  await page.getByRole('button', { name: /open user menu/i }).click();
-  await page.getByRole('button', { name: /sign out/i }).click();
-  await expect(page).toHaveURL('/login');
-
-  const keysAfter = await page.evaluate(() => Object.keys(localStorage));
-  expect(keysAfter.some((k) => k.startsWith('budget-buddy:cache:'))).toBe(false);
-});
-
 test('second visit to transactions page shows content without loading skeleton', async ({ page }) => {
   // Seed the cache
   await page.goto('/overview');
@@ -54,4 +39,20 @@ test('second visit to transactions page shows content without loading skeleton',
   // Content should appear without remaining on a skeleton
   await expect(page.getByRole('button', { name: 'Add Transaction' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Newest first' })).toBeVisible();
+});
+
+// Sign-out test must run last — it invalidates the auth session
+test('cache is cleared on sign out', async ({ page }) => {
+  await page.goto('/overview');
+  await expect(page.getByText('Period Balance')).toBeVisible();
+
+  const keysBefore = await page.evaluate(() => Object.keys(localStorage));
+  expect(keysBefore.some((k) => k.startsWith('budget-buddy:cache:'))).toBe(true);
+
+  await page.getByRole('button', { name: /open user menu/i }).click();
+  await page.getByRole('menuitem', { name: /sign out/i }).click();
+  await expect(page).toHaveURL('/login');
+
+  const keysAfter = await page.evaluate(() => Object.keys(localStorage));
+  expect(keysAfter.some((k) => k.startsWith('budget-buddy:cache:'))).toBe(false);
 });
