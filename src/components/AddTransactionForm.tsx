@@ -1,45 +1,32 @@
 "use client";
 
 import { addTransaction } from "@/app/actions/transaction-actions";
-import { getCategories, createCategory } from "@/app/actions/category-actions";
-import { TransactionType, Category } from "@/types/database";
-import { useState, useEffect } from "react";
+import { createCategory } from "@/app/actions/category-actions";
+import { TransactionType } from "@/types/database";
+import { useState } from "react";
 import { CategorySelector } from "./CategorySelector";
 import { CategoryForm } from "./CategoryForm";
+import { useData } from "@/providers/DataProvider";
 
 interface AddTransactionFormProps {
   onSuccess?: () => void;
 }
 
 export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
+  const { categories: allCategories, applyTransaction, invalidateAndRefetch, status } = useData();
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<TransactionType>("expense");
   const [categoryId, setCategoryId] = useState("");
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
-  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(getTodayDate());
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [isCreatingSubmitting, setIsCreatingSubmitting] = useState(false);
 
   // Filter categories locally based on the selected type
   const categories = allCategories.filter((cat) => cat.category_type === type);
-
-  // Fetch all categories once when the form mounts
-  useEffect(() => {
-    async function loadCategories() {
-      setIsLoadingCategories(true);
-      const result = await getCategories();
-      if (result.success && result.data) {
-        setAllCategories(result.data);
-      }
-      setIsLoadingCategories(false);
-    }
-    loadCategories();
-  }, []);
 
   async function handleCreateCategory(data: {
     name: string;
@@ -53,9 +40,9 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
     setIsCreatingSubmitting(false);
 
     if (result.success && result.data) {
-      setAllCategories([...allCategories, result.data]);
       setCategoryId(result.data.id);
       setIsCreatingCategory(false);
+      invalidateAndRefetch(); // new category must appear in DataProvider's categories list
     } else {
       setCreateError(result.error ?? "Failed to create category");
     }
@@ -83,7 +70,8 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
 
     setIsSubmitting(false);
 
-    if (result.success) {
+    if (result.success && result.data) {
+      applyTransaction({ op: "add", transaction: result.data });
       setMessage({ type: "success", text: "Transaction added successfully!" });
       setAmount("");
       setCategoryId("");
@@ -210,7 +198,7 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                 categories={categories}
                 selectedId={categoryId}
                 onSelect={(id: string) => setCategoryId(id)}
-                isLoading={isLoadingCategories}
+                isLoading={status === "loading"}
               />
             )}
           </div>

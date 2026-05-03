@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { LogOut, User } from 'lucide-react'
 import { useState } from 'react'
+import { clearAllCaches } from '@/lib/client-cache'
 
 interface UserMenuProps {
     email: string
@@ -15,6 +16,7 @@ export default function UserMenu({ email }: UserMenuProps) {
     const [isOpen, setIsOpen] = useState(false)
 
     const handleSignOut = async () => {
+        clearAllCaches()
         await supabase.auth.signOut()
         router.refresh()
     }

@@ -1,8 +1,10 @@
-import { getTransactionsByRange } from "@/app/actions/transaction-actions";
-import { getCategories } from "@/app/actions/category-actions";
+"use client";
+
+import { useData } from "@/providers/DataProvider";
+import { filterByRange } from "@/lib/compute";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 
-interface TransactionsContentProps {
+interface TransactionsClientContentProps {
   start: string;
   end: string;
   categoryIds: string[];
@@ -11,30 +13,30 @@ interface TransactionsContentProps {
   toDate: Date;
 }
 
-export async function TransactionsContent({
+export function TransactionsClientContent({
   start,
   end,
   categoryIds,
   sort,
   fromDate,
   toDate,
-}: TransactionsContentProps) {
-  const [txResult, catResult] = await Promise.all([
-    getTransactionsByRange(start, end, { categoryIds: categoryIds.length ? categoryIds : undefined, sort }),
-    getCategories(),
-  ]);
+}: TransactionsClientContentProps) {
+  const { transactions, categories, status } = useData();
 
-  const transactions = txResult.data ?? [];
-  const categories = catResult.data ?? [];
+  const rangeFiltered = filterByRange(transactions, start, end);
 
-  const amounts = transactions.map((t) => t.amount);
+  const amounts = rangeFiltered.map((t) => t.amount);
   const amountMin = amounts.length ? Math.min(...amounts) : 0;
   const amountMax = amounts.length ? Math.max(...amounts) : 0;
+
+  if (status === "loading") {
+    return <TransactionsSkeleton />;
+  }
 
   return (
     <TransactionFilters
       categories={categories}
-      allTransactions={transactions}
+      allTransactions={rangeFiltered}
       initialFrom={fromDate}
       initialTo={toDate}
       initialSelectedCategories={categoryIds}

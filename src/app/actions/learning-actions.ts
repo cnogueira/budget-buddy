@@ -3,6 +3,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { normalizeDescription } from "@/lib/categorization/engine";
+import { Category, TransactionWithCategory } from "@/types/database";
+
+type RawTransactionRow = Omit<TransactionWithCategory, "categories"> & {
+  categories: Category | Category[] | null;
+};
 
 export async function updateTransactionCategory(transactionId: string, categoryId: string) {
     const supabase = await createClient();
@@ -27,11 +32,13 @@ export async function updateTransactionCategory(transactionId: string, categoryI
         return { success: false, error: "Unauthorized" };
     }
 
-    // 2. Update the transaction
-    const { error: updateError } = await supabase
+    // 2. Update the transaction and return the updated row with category joined
+    const { data: updatedRow, error: updateError } = await supabase
         .from('transactions')
         .update({ category_id: categoryId })
-        .eq('id', transactionId);
+        .eq('id', transactionId)
+        .select('*, categories(*)')
+        .single();
 
     if (updateError) {
         return { success: false, error: updateError.message };
@@ -54,7 +61,13 @@ export async function updateTransactionCategory(transactionId: string, categoryI
         }
     }
 
+    const raw = updatedRow as RawTransactionRow;
+    const normalized: TransactionWithCategory = {
+        ...raw,
+        categories: Array.isArray(raw.categories) ? raw.categories[0] : raw.categories,
+    };
+
     revalidatePath('/transactions');
     revalidatePath('/overview');
-    return { success: true };
+    return { success: true, data: normalized };
 }

@@ -3,33 +3,33 @@
 import { deleteTransaction } from "@/app/actions/transaction-actions";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useData } from "@/providers/DataProvider";
 
 interface DeleteTransactionButtonProps {
   readonly id: string;
 }
 
 export function DeleteTransactionButton({ id }: DeleteTransactionButtonProps) {
+  const { applyTransaction } = useData();
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
-    // Confirmation dialog
     const confirmed = globalThis.confirm(
       "Are you sure you want to delete this transaction? This action cannot be undone."
     );
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     setIsDeleting(true);
 
     const result = await deleteTransaction(id);
 
-    if (!result.success) {
+    if (result.success) {
+      applyTransaction({ op: "delete", id });
+    } else {
       alert(`Failed to delete transaction: ${result.error}`);
-      setIsDeleting(false);
     }
-    // No need to reset isDeleting on success since the component will unmount
+    setIsDeleting(false);
   }
 
   return (

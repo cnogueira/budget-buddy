@@ -4,9 +4,16 @@ import { useState } from "react";
 import { Download } from "lucide-react";
 import { Modal } from "./Modal";
 import { ImportTransactionsForm } from "./ImportTransactionsForm";
+import { useData } from "@/providers/DataProvider";
 
 export function ImportTransactionsButton() {
+    const { invalidateAndRefetch } = useData();
     const [isOpen, setIsOpen] = useState(false);
+
+    async function handleSuccess() {
+        await invalidateAndRefetch();
+        setIsOpen(false);
+    }
 
     return (
         <>
@@ -24,7 +31,7 @@ export function ImportTransactionsButton() {
                 onClose={() => setIsOpen(false)}
                 title="Import Transactions"
             >
-                <ImportTransactionsForm onSuccess={() => setIsOpen(false)} />
+                <ImportTransactionsForm onSuccess={handleSuccess} />
             </Modal>
         </>
     );
