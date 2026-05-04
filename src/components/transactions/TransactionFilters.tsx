@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ArrowUpDown } from "lucide-react";
 import { Category, TransactionWithCategory } from "@/types/database";
@@ -15,9 +15,6 @@ interface TransactionFiltersProps {
   allTransactions: TransactionWithCategory[];
   initialFrom: Date;
   initialTo: Date;
-  initialSelectedCategories: string[];
-  initialSort: "asc" | "desc";
-  amountMin: number;
   amountMax: number;
 }
 
@@ -26,17 +23,22 @@ export function TransactionFilters({
   allTransactions,
   initialFrom,
   initialTo,
-  initialSelectedCategories,
-  initialSort,
-  amountMin,
   amountMax,
 }: TransactionFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [amountRange, setAmountRange] = useState<[number, number]>([amountMin, amountMax]);
-  const sort = initialSort;
+  // Read filter state from URL — useSearchParams updates optimistically on router.replace(),
+  // so the UI responds immediately without waiting for the server RSC round-trip.
+  const sort = searchParams.get("sort") === "asc" ? "asc" : "desc";
+  const selectedCategories = searchParams.get("categories")?.split(",").filter(Boolean) ?? [];
+
+  const [amountRange, setAmountRange] = useState<[number, number]>([0, amountMax]);
+
+  useEffect(() => {
+    setAmountRange([0, amountMax]);
+  }, [amountMax]);
 
   function updateParams(updates: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -65,8 +67,8 @@ export function TransactionFilters({
   const filtered = allTransactions.filter((t) => {
     const inAmount = t.amount >= amountRange[0] && t.amount <= amountRange[1];
     const inCategory =
-      initialSelectedCategories.length === 0 ||
-      (t.category_id !== null && initialSelectedCategories.includes(t.category_id));
+      selectedCategories.length === 0 ||
+      (t.category_id !== null && selectedCategories.includes(t.category_id));
     return inAmount && inCategory;
   });
 
@@ -87,12 +89,12 @@ export function TransactionFilters({
         />
         <CategoryMultiSelect
           categories={categories}
-          selected={initialSelectedCategories}
+          selected={selectedCategories}
           onChange={handleCategoriesChange}
         />
-        {amountMax > amountMin && (
+        {amountMax > 0 && (
           <AmountRangeSlider
-            min={amountMin}
+            min={0}
             max={amountMax}
             value={amountRange}
             onChange={setAmountRange}

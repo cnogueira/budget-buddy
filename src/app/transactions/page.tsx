@@ -22,7 +22,7 @@ function parseDate(s: string | undefined, fallback: Date): Date {
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string; categories?: string; sort?: string }>;
+  searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -35,13 +35,6 @@ export default async function TransactionsPage({
   const toDate = parseDate(params.to, defaults.to);
   const start = toISODate(fromDate);
   const end = toISODate(toDate);
-
-  const categoryIds = params.categories
-    ? params.categories.split(",").filter(Boolean)
-    : [];
-
-  const sort: "asc" | "desc" =
-    params.sort === "asc" ? "asc" : "desc";
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
@@ -60,8 +53,6 @@ export default async function TransactionsPage({
           <TransactionsClientContent
             start={start}
             end={end}
-            categoryIds={categoryIds}
-            sort={sort}
             fromDate={fromDate}
             toDate={toDate}
           />

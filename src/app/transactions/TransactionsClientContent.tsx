@@ -7,8 +7,6 @@ import { TransactionFilters } from "@/components/transactions/TransactionFilters
 interface TransactionsClientContentProps {
   start: string;
   end: string;
-  categoryIds: string[];
-  sort: "asc" | "desc";
   fromDate: Date;
   toDate: Date;
 }
@@ -16,8 +14,6 @@ interface TransactionsClientContentProps {
 export function TransactionsClientContent({
   start,
   end,
-  categoryIds,
-  sort,
   fromDate,
   toDate,
 }: TransactionsClientContentProps) {
@@ -26,7 +22,6 @@ export function TransactionsClientContent({
   const rangeFiltered = filterByRange(transactions, start, end);
 
   const amounts = rangeFiltered.map((t) => t.amount);
-  const amountMin = amounts.length ? Math.min(...amounts) : 0;
   const amountMax = amounts.length ? Math.max(...amounts) : 0;
 
   if (status === "loading") {
@@ -39,9 +34,6 @@ export function TransactionsClientContent({
       allTransactions={rangeFiltered}
       initialFrom={fromDate}
       initialTo={toDate}
-      initialSelectedCategories={categoryIds}
-      initialSort={sort}
-      amountMin={amountMin}
       amountMax={amountMax}
     />
   );
