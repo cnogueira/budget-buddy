@@ -62,12 +62,21 @@ export function TransactionFilters({
     updateParams({ sort: sort === "desc" ? "asc" : "desc" });
   }
 
-  // Client-side amount filter applied to the already-server-filtered list
-  const filtered = allTransactions.filter(
-    (t) => t.amount >= amountRange[0] && t.amount <= amountRange[1]
-  );
+  const filtered = allTransactions.filter((t) => {
+    const inAmount = t.amount >= amountRange[0] && t.amount <= amountRange[1];
+    const inCategory =
+      initialSelectedCategories.length === 0 ||
+      (t.category_id !== null && initialSelectedCategories.includes(t.category_id));
+    return inAmount && inCategory;
+  });
 
-  const sorted = filtered;
+  const sorted = [...filtered].sort((a, b) => {
+    const dateCmp = a.date.localeCompare(b.date);
+    if (dateCmp !== 0) return sort === "asc" ? dateCmp : -dateCmp;
+    return sort === "asc"
+      ? a.created_at.localeCompare(b.created_at)
+      : b.created_at.localeCompare(a.created_at);
+  });
 
   return (
     <div className="flex flex-col gap-4">
