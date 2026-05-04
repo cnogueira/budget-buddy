@@ -1,6 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test';
+import { ensureSignedOut } from './helpers/auth';
 
-test.use({ storageState: { cookies: [], origins: [] } });
+test.beforeEach(async ({ page }) => {
+  await ensureSignedOut(page);
+});
 
 test('/privacy is reachable without auth', async ({ page }) => {
   await page.goto('/privacy');

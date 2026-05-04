@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test';
 
 test('overview renders chart widgets', async ({ page }) => {
   await page.goto('/overview');

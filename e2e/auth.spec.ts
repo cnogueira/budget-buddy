@@ -1,13 +1,14 @@
-import { test, expect } from '@playwright/test';
-
-test.use({ storageState: { cookies: [], origins: [] } });
+import { test, expect } from './test';
+import { ensureSignedOut } from './helpers/auth';
 
 test('unauthenticated visit to / redirects to /login', async ({ page }) => {
+  await ensureSignedOut(page);
   await page.goto('/');
   await expect(page).toHaveURL(/\/login/);
 });
 
 test('can sign in with email and password', async ({ page }) => {
+  await ensureSignedOut(page);
   await page.goto('/login');
 
   await page.getByText('Sign in with email').click();

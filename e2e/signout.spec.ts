@@ -1,7 +1,4 @@
-// This file is named z_signout.spec.ts so it runs last alphabetically.
-// The sign-out call invalidates the Supabase access token in the shared auth state,
-// which would break any tests that run after it in the same process.
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test';
 
 test('cache is cleared on sign out', async ({ page }) => {
   await page.goto('/overview');
