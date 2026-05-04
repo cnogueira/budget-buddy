@@ -17,7 +17,7 @@ export default function UserMenu({ email }: UserMenuProps) {
 
     const handleSignOut = async () => {
         clearAllCaches()
-        await supabase.auth.signOut()
+        await supabase.auth.signOut({ scope: 'local' })
         router.refresh()
     }
 
