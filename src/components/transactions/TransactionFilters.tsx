@@ -1,71 +1,89 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ArrowUpDown } from "lucide-react";
 import { Category, TransactionWithCategory } from "@/types/database";
 import { DateRangePicker, DateRange } from "@/components/DateRangePicker";
 import { AmountRangeSlider } from "./AmountRangeSlider";
 import { CategoryMultiSelect } from "./CategoryMultiSelect";
 import { TransactionList } from "@/components/TransactionList";
+import { filterByRange } from "@/lib/compute";
 import { toISODate } from "@/lib/format";
+
+function defaultDateRange() {
+  const now = new Date();
+  return {
+    from: new Date(now.getFullYear(), now.getMonth(), 1),
+    to: new Date(now.getFullYear(), now.getMonth() + 1, 0),
+  };
+}
+
+function parseDate(s: string | null, fallback: Date): Date {
+  if (!s) return fallback;
+  const d = new Date(s + "T00:00:00");
+  return isNaN(d.getTime()) ? fallback : d;
+}
 
 interface TransactionFiltersProps {
   categories: Category[];
   allTransactions: TransactionWithCategory[];
-  initialFrom: Date;
-  initialTo: Date;
-  amountMax: number;
 }
 
-export function TransactionFilters({
-  categories,
-  allTransactions,
-  initialFrom,
-  initialTo,
-  amountMax,
-}: TransactionFiltersProps) {
-  const router = useRouter();
-  const pathname = usePathname();
+export function TransactionFilters({ categories, allTransactions }: TransactionFiltersProps) {
   const searchParams = useSearchParams();
 
-  // Read filter state from URL — useSearchParams updates optimistically on router.replace(),
-  // so the UI responds immediately without waiting for the server RSC round-trip.
-  const sort = searchParams.get("sort") === "asc" ? "asc" : "desc";
-  const selectedCategories = searchParams.get("categories")?.split(",").filter(Boolean) ?? [];
+  const dflt = defaultDateRange();
+  const [dateRange, setDateRange] = useState<DateRange>(() => ({
+    from: parseDate(searchParams.get("from"), dflt.from),
+    to: parseDate(searchParams.get("to"), dflt.to),
+  }));
+  const [sort, setSort] = useState<"asc" | "desc">(() =>
+    searchParams.get("sort") === "asc" ? "asc" : "desc"
+  );
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
+    searchParams.get("categories")?.split(",").filter(Boolean) ?? []
+  );
+  // null means "full range" (no amount filtering); set by user interaction
+  const [amountRange, setAmountRange] = useState<[number, number] | null>(null);
 
-  const [amountRange, setAmountRange] = useState<[number, number]>([0, amountMax]);
+  const startISO = toISODate(dateRange.from);
+  const endISO = toISODate(dateRange.to);
+  const rangeFiltered = filterByRange(allTransactions, startISO, endISO);
+  const amountMax = rangeFiltered.length ? Math.max(...rangeFiltered.map((t) => t.amount)) : 0;
+  const effectiveAmountRange = amountRange ?? [0, amountMax];
 
-  useEffect(() => {
-    setAmountRange([0, amountMax]);
-  }, [amountMax]);
-
-  function updateParams(updates: Record<string, string | null>) {
-    const params = new URLSearchParams(searchParams.toString());
+  // Sync URL without triggering a Next.js navigation (no RSC round-trip)
+  function updateURL(updates: Record<string, string | null>) {
+    const params = new URLSearchParams(window.location.search);
     for (const [key, val] of Object.entries(updates)) {
-      if (val === null || val === "") {
-        params.delete(key);
-      } else {
-        params.set(key, val);
-      }
+      if (val === null || val === "") params.delete(key);
+      else params.set(key, val);
     }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
   }
 
   function handleDateChange(range: DateRange) {
-    updateParams({ from: toISODate(range.from), to: toISODate(range.to) });
+    setDateRange(range);
+    setAmountRange(null); // reset amount filter on date change
+    updateURL({ from: toISODate(range.from), to: toISODate(range.to) });
   }
 
   function handleCategoriesChange(ids: string[]) {
-    updateParams({ categories: ids.join(",") });
+    setSelectedCategories(ids);
+    updateURL({ categories: ids.join(",") });
   }
 
   function toggleSort() {
-    updateParams({ sort: sort === "desc" ? "asc" : "desc" });
+    const newSort = sort === "desc" ? "asc" : "desc";
+    setSort(newSort);
+    updateURL({ sort: newSort });
   }
 
-  const filtered = allTransactions.filter((t) => {
-    const inAmount = t.amount >= amountRange[0] && t.amount <= amountRange[1];
+  const filtered = rangeFiltered.filter((t) => {
+    const inAmount =
+      amountRange === null ||
+      (t.amount >= effectiveAmountRange[0] && t.amount <= effectiveAmountRange[1]);
     const inCategory =
       selectedCategories.length === 0 ||
       (t.category_id !== null && selectedCategories.includes(t.category_id));
@@ -83,10 +101,7 @@ export function TransactionFilters({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-3">
-        <DateRangePicker
-          value={{ from: initialFrom, to: initialTo }}
-          onChange={handleDateChange}
-        />
+        <DateRangePicker value={dateRange} onChange={handleDateChange} />
         <CategoryMultiSelect
           categories={categories}
           selected={selectedCategories}
@@ -96,7 +111,7 @@ export function TransactionFilters({
           <AmountRangeSlider
             min={0}
             max={amountMax}
-            value={amountRange}
+            value={effectiveAmountRange}
             onChange={setAmountRange}
           />
         )}

@@ -4,37 +4,11 @@ import { AddTransactionButton } from "@/components/AddTransactionButton";
 import { ImportTransactionsButton } from "@/components/ImportTransactionsButton";
 import { TransactionsClientContent } from "./TransactionsClientContent";
 import { DataProvider } from "@/providers/DataProvider";
-import { toISODate } from "@/lib/format";
 
-function defaultRange(): { from: Date; to: Date } {
-  const now = new Date();
-  const from = new Date(now.getFullYear(), now.getMonth(), 1);
-  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return { from, to };
-}
-
-function parseDate(s: string | undefined, fallback: Date): Date {
-  if (!s) return fallback;
-  const d = new Date(s + "T00:00:00");
-  return isNaN(d.getTime()) ? fallback : d;
-}
-
-export default async function TransactionsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ from?: string; to?: string }>;
-}) {
+export default async function TransactionsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-
-  const params = await searchParams;
-  const defaults = defaultRange();
-
-  const fromDate = parseDate(params.from, defaults.from);
-  const toDate = parseDate(params.to, defaults.to);
-  const start = toISODate(fromDate);
-  const end = toISODate(toDate);
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
@@ -50,12 +24,7 @@ export default async function TransactionsPage({
             </div>
           </header>
 
-          <TransactionsClientContent
-            start={start}
-            end={end}
-            fromDate={fromDate}
-            toDate={toDate}
-          />
+          <TransactionsClientContent />
         </DataProvider>
       </main>
     </div>

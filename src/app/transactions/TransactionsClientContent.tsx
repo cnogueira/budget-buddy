@@ -1,42 +1,16 @@
 "use client";
 
 import { useData } from "@/providers/DataProvider";
-import { filterByRange } from "@/lib/compute";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 
-interface TransactionsClientContentProps {
-  start: string;
-  end: string;
-  fromDate: Date;
-  toDate: Date;
-}
-
-export function TransactionsClientContent({
-  start,
-  end,
-  fromDate,
-  toDate,
-}: TransactionsClientContentProps) {
+export function TransactionsClientContent() {
   const { transactions, categories, status } = useData();
-
-  const rangeFiltered = filterByRange(transactions, start, end);
-
-  const amounts = rangeFiltered.map((t) => t.amount);
-  const amountMax = amounts.length ? Math.max(...amounts) : 0;
 
   if (status === "loading") {
     return <TransactionsSkeleton />;
   }
 
-  return (
-    <TransactionFilters
-      categories={categories}
-      allTransactions={rangeFiltered}
-      initialFrom={fromDate}
-      initialTo={toDate}
-      amountMax={amountMax}
-    />
-  );
+  return <TransactionFilters categories={categories} allTransactions={transactions} />;
 }
 
 export function TransactionsSkeleton() {
