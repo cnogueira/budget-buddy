@@ -1,32 +1,30 @@
-import { getOverviewData } from "@/app/actions/overview-actions";
+"use client";
+
+import { useData } from "@/providers/DataProvider";
+import { computeOverviewData } from "@/lib/compute";
 import { PeriodBalanceChart } from "@/components/overview/PeriodBalanceChart";
 import { ChangesChart } from "@/components/overview/ChangesChart";
 import { PeriodCategoryWidget } from "@/components/overview/PeriodCategoryWidget";
 
-interface OverviewContentProps {
-  start: string;
-  end: string;
+interface OverviewClientContentProps {
+  from: string;
+  to: string;
 }
 
-export async function OverviewContent({ start, end }: OverviewContentProps) {
-  const result = await getOverviewData(start, end);
+export function OverviewClientContent({ from, to }: OverviewClientContentProps) {
+  const { transactions, status } = useData();
+  const data = computeOverviewData(transactions, from, to);
 
-  if (!result.success || !result.data) {
-    return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-        Failed to load overview data.
-      </div>
-    );
+  if (status === "loading") {
+    return <OverviewSkeleton />;
   }
-
-  const { transactions, categoryBreakdown } = result.data;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <PeriodBalanceChart transactions={transactions} from={start} to={end} />
-      <ChangesChart transactions={transactions} from={start} to={end} />
-      <PeriodCategoryWidget type="income" categoryBreakdown={categoryBreakdown} from={start} to={end} />
-      <PeriodCategoryWidget type="expense" categoryBreakdown={categoryBreakdown} from={start} to={end} />
+      <PeriodBalanceChart transactions={data.transactions} from={from} to={to} />
+      <ChangesChart transactions={data.transactions} from={from} to={to} />
+      <PeriodCategoryWidget type="income" categoryBreakdown={data.categoryBreakdown} from={from} to={to} />
+      <PeriodCategoryWidget type="expense" categoryBreakdown={data.categoryBreakdown} from={from} to={to} />
     </div>
   );
 }

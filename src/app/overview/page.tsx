@@ -1,8 +1,8 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DateRangeNav } from "@/components/DateRangeNav";
-import { OverviewContent, OverviewSkeleton } from "./OverviewContent";
+import { OverviewClientContent } from "./OverviewClientContent";
+import { DataProvider } from "@/providers/DataProvider";
 import { toISODate } from "@/lib/format";
 
 function defaultRange(): { from: Date; to: Date } {
@@ -35,8 +35,6 @@ export default async function OverviewPage({
   const start = toISODate(fromDate);
   const end = toISODate(toDate);
 
-  const contentKey = `${start}-${end}`;
-
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -44,9 +42,9 @@ export default async function OverviewPage({
           <DateRangeNav from={fromDate} to={toDate} />
         </div>
 
-        <Suspense key={contentKey} fallback={<OverviewSkeleton />}>
-          <OverviewContent start={start} end={end} />
-        </Suspense>
+        <DataProvider userId={user.id}>
+          <OverviewClientContent from={start} to={end} />
+        </DataProvider>
       </main>
     </div>
   );

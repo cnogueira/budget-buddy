@@ -8,6 +8,7 @@ export interface Category {
     color: string; // hex color code
     icon: string;  // Lucide icon name (kebab-case)
     created_at: string;
+    updated_at: string;
 }
 
 export interface CategoryInsert {
@@ -27,6 +28,7 @@ export interface Transaction {
     description: string | null;
     date: string; // ISO string YYYY-MM-DD
     created_at: string;
+    updated_at: string;
 }
 
 export interface TransactionInsert {

@@ -5,6 +5,7 @@ import { Category } from "@/types/database";
 import { updateTransactionCategory } from "@/app/actions/learning-actions";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
+import { useData } from "@/providers/DataProvider";
 
 interface CategoryPickerProps {
     transactionId: string;
@@ -23,6 +24,7 @@ export function CategoryPicker({
     currentCategoryIcon,
     categories
 }: CategoryPickerProps) {
+    const { applyTransaction } = useData();
     const [isOpen, setIsOpen] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     const [openUpward, setOpenUpward] = useState(false);
@@ -39,7 +41,9 @@ export function CategoryPicker({
         setIsUpdating(false);
         setIsOpen(false);
 
-        if (!result.success) {
+        if (result.success && result.data) {
+            applyTransaction({ op: "update", transaction: result.data });
+        } else if (!result.success) {
             alert(result.error || "Failed to update category");
         }
     }
