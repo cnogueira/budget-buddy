@@ -1,4 +1,4 @@
--- =====================================================
++-- =====================================================
 -- Budget Buddy - Category Management Migration
 -- =====================================================
 -- Self-contained. Run independently against any environment.
