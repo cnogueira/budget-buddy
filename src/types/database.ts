@@ -75,3 +75,31 @@ export interface OverviewData {
   totalExpense: number;
 }
 
+export interface AiCategoryProposal {
+  name: string;
+  icon: string;
+  color: string;
+  category_type: TransactionType;
+}
+
+export interface AiTransactionProposal {
+  transactionId: string;
+  description: string;
+  amount: number;
+  type: TransactionType;
+  categoryId: string | null;
+  newCategory: AiCategoryProposal | null;
+}
+
+export interface AiRuleProposal {
+  match_pattern: string;
+  match_type: 'EXACT' | 'CONTAINS';
+  categoryId: string | null;
+  newCategory: AiCategoryProposal | null;
+}
+
+export interface AiReviewProposal {
+  transactions: AiTransactionProposal[];
+  rules: AiRuleProposal[];
+}
+
