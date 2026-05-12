@@ -141,6 +141,8 @@ export async function importTransactions(formData: FormData): Promise<ImportResu
     revalidatePath('/overview');
 
     const hasUnknown = allTxContext.some(tx => tx.matchedCategoryName === null);
+    console.log('[import] inserted:', importedCount, 'hasUnknown:', hasUnknown, 'allTxContext.length:', allTxContext.length);
+
     if (hasUnknown) {
         const [{ data: categories }, { data: rules }] = await Promise.all([
             supabase.from('categories').select('id, name, category_type, color, icon, created_at, updated_at, user_id').eq('user_id', user.id),
@@ -152,6 +154,8 @@ export async function importTransactions(formData: FormData): Promise<ImportResu
             categories ?? [],
             rules ?? [],
         );
+
+        console.log('[import] aiPropose result:', pendingReview ? `${pendingReview.transactions.length} txs, ${pendingReview.rules.length} rules` : 'null');
 
         if (pendingReview) {
             return { success: true, count: importedCount, duplicateCount, pendingReview };

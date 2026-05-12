@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getAiProvider } from '@/lib/ai/provider';
 import { Category, AiReviewProposal, AiTransactionProposal, AiRuleProposal, AiCategoryProposal, TransactionType } from '@/types/database';
 import { CATEGORY_COLORS, CATEGORY_ICONS } from '@/lib/categories/constants';
 
@@ -18,31 +18,31 @@ interface DbRule {
     category_id: string;
 }
 
-interface GeminiCategorization {
+interface AiCategorization {
     transactionIndex: number;
     existingCategoryId: string | null;
     newCategoryName: string | null;
     proposedRule: { match_pattern: string; match_type: 'EXACT' | 'CONTAINS' } | null;
 }
 
-interface GeminiStandaloneRule {
+interface AiStandaloneRule {
     match_pattern: string;
     match_type: 'EXACT' | 'CONTAINS';
     existingCategoryId: string | null;
     newCategoryName: string | null;
 }
 
-interface GeminiNewCategory {
+interface AiNewCategory {
     name: string;
     icon: string;
     color: string;
     category_type: TransactionType;
 }
 
-interface GeminiResponse {
-    categorizations: GeminiCategorization[];
-    standaloneRules: GeminiStandaloneRule[];
-    newCategories: GeminiNewCategory[];
+interface AiResponse {
+    categorizations: AiCategorization[];
+    standaloneRules: AiStandaloneRule[];
+    newCategories: AiNewCategory[];
 }
 
 export async function aiPropose(
@@ -50,18 +50,17 @@ export async function aiPropose(
     categories: Category[],
     rules: DbRule[],
 ): Promise<AiReviewProposal | null> {
-    if (!process.env.GEMINI_API_KEY) return null;
+    const provider = getAiProvider();
+    if (!provider) {
+        console.log('[ai-categorizer] no AI provider configured, skipping');
+        return null;
+    }
 
     const unknownTxs = allTransactions.filter(tx => tx.matchedCategoryName === null);
+    console.log('[ai-categorizer] unknownTxs:', unknownTxs.length, '/', allTransactions.length);
     if (unknownTxs.length === 0) return null;
 
     try {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.0-flash',
-            generationConfig: { responseMimeType: 'application/json' },
-        });
-
         const txList = allTransactions.map(tx =>
             `[${tx.index}] ${tx.date} | ${tx.type} | €${tx.amount.toFixed(2)} | "${tx.description}" | category: ${tx.matchedCategoryName ?? 'UNMATCHED'}`
         ).join('\n');
@@ -131,12 +130,12 @@ ${CATEGORY_COLORS.join(', ')}
 
 Only include UNMATCHED transactions in categorizations. Return valid JSON only.`;
 
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        const raw = JSON.parse(text) as GeminiResponse;
+        console.log('[ai-categorizer] calling provider...');
+        const text = await provider(prompt);
+        console.log('[ai-categorizer] response length:', text.length);
+        const raw = JSON.parse(text) as AiResponse;
 
-        // Build a lookup from newCategoryName → GeminiNewCategory
-        const newCatMap = new Map<string, GeminiNewCategory>(
+        const newCatMap = new Map<string, AiNewCategory>(
             (raw.newCategories ?? []).map(nc => [nc.name, nc])
         );
 
@@ -223,7 +222,8 @@ Only include UNMATCHED transactions in categorizations. Return valid JSON only.`
 
         return { transactions, rules: dedupedRules };
     } catch (e) {
-        console.error('[ai-categorizer] error:', e);
+        console.error('[ai-categorizer] error:', e instanceof Error ? e.message : e);
+        if (e instanceof Error && e.stack) console.error(e.stack);
         return null;
     }
 }
