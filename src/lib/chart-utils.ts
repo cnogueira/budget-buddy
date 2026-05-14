@@ -7,7 +7,7 @@ export function isoWeek(dateStr: string): string {
   thursday.setDate(d.getDate() - (d.getDay() + 6) % 7 + 3);
   // Jan 4 is always in week 1 of Thursday's year
   const jan4 = new Date(thursday.getFullYear(), 0, 4);
-  const weekNum = 1 + Math.round((thursday.getTime() - jan4.getTime()) / 604800000);
+  const weekNum = 1 + Math.round((thursday.getTime() - jan4.getTime()) / 604800000); // ms per week
   return `${thursday.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
 }
 

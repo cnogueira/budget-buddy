@@ -107,7 +107,7 @@ test('Period Balance chart fills all months in a multi-month range', async ({ pa
   await expect(card.getByRole('application')).toBeVisible();
 
   // Switch to Months granularity on the Period Balance chart
-  await page.getByRole('button', { name: 'Months' }).first().click();
+  await card.getByRole('button', { name: 'Months' }).click();
 
   // Every month in the range must appear as an x-axis tick label —
   // including months that have no transactions.
