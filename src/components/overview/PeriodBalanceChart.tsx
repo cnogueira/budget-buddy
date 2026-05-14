@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { OverviewTransaction } from "@/types/database";
 import { formatDateRange } from "@/lib/format";
-import { Granularity, bucketKey, bucketLabel } from "@/lib/chart-utils";
+import { Granularity, bucketKey, bucketLabel, enumerateBuckets } from "@/lib/chart-utils";
 
 interface PeriodBalanceChartProps {
   transactions: OverviewTransaction[];
@@ -20,7 +20,7 @@ interface PeriodBalanceChartProps {
   to: string;
 }
 
-function buildSeries(transactions: OverviewTransaction[], granularity: Granularity, periodFrom: string) {
+function buildSeries(transactions: OverviewTransaction[], granularity: Granularity, from: string, to: string) {
   const netByBucket = new Map<string, number>();
   for (const t of transactions) {
     const key = bucketKey(t.date, granularity);
@@ -28,29 +28,11 @@ function buildSeries(transactions: OverviewTransaction[], granularity: Granulari
     netByBucket.set(key, (netByBucket.get(key) ?? 0) + delta);
   }
 
-  const startKey = bucketKey(periodFrom, granularity);
-  const startLabel = bucketLabel(startKey, granularity);
-
-  const keys = Array.from(netByBucket.keys()).sort();
   let running = 0;
-  const txPoints = keys.map((key) => {
-    running += netByBucket.get(key)!;
+  return enumerateBuckets(from, to, granularity).map((key) => {
+    running += netByBucket.get(key) ?? 0;
     return { label: bucketLabel(key, granularity), balance: Math.round(running * 100) / 100 };
   });
-
-  if (txPoints.length === 0) {
-    return [{ label: startLabel, balance: 0 }];
-  }
-
-  if (keys[0] !== startKey) {
-    // First transaction is after the period start — show a labeled 0 anchor.
-    return [{ label: startLabel, balance: 0 }, ...txPoints];
-  }
-
-  // First transaction falls in the same bucket as the period start.
-  // Use an unlabeled anchor so the chart starts at 0 and immediately
-  // rises/falls to the first value, without creating a duplicate X tick.
-  return [{ label: "", balance: 0 }, ...txPoints];
 }
 
 function formatEUR(v: number) {
@@ -65,7 +47,7 @@ const GRANULARITIES: { key: Granularity; label: string }[] = [
 
 export function PeriodBalanceChart({ transactions, from, to }: PeriodBalanceChartProps) {
   const [granularity, setGranularity] = useState<Granularity>("days");
-  const data = buildSeries(transactions, granularity, from);
+  const data = buildSeries(transactions, granularity, from, to);
 
   const dateSubtitle = formatDateRange(from, to);
 

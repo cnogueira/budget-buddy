@@ -93,3 +93,24 @@ test('granularity toggle switches without a page reload', async ({ page }) => {
   await page.getByRole('button', { name: 'Months' }).first().click();
   await expect(page).toHaveURL('/overview');
 });
+
+test('Period Balance chart fills all months in a multi-month range', async ({ page }) => {
+  // A range spanning Jan 1 – May 14, 2026 (5 months)
+  await page.goto('/overview?from=2026-01-01&to=2026-05-14');
+
+  // Scope to the Period Balance card via its h3 heading's nearest rounded-xl ancestor
+  const card = page.getByRole('heading', { name: 'Period Balance', level: 3 })
+    .locator('xpath=ancestor::div[contains(@class,"rounded-xl")][1]');
+  await expect(card).toBeVisible();
+
+  // Chart must be rendering (not empty state)
+  await expect(card.getByRole('application')).toBeVisible();
+
+  // Switch to Months granularity on the Period Balance chart
+  await page.getByRole('button', { name: 'Months' }).first().click();
+
+  // Every month in the range must appear as an x-axis tick label —
+  // including months that have no transactions.
+  const ticks = card.locator('.recharts-xAxis .recharts-cartesian-axis-tick');
+  await expect(ticks).toHaveCount(5);
+});
