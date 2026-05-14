@@ -2,10 +2,13 @@ export type Granularity = "days" | "weeks" | "months";
 
 export function isoWeek(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
-  const jan4 = new Date(d.getFullYear(), 0, 4);
-  const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000);
-  const week = Math.ceil((dayOfYear + jan4.getDay() - 1) / 7);
-  return `${d.getFullYear()}-W${String(week).padStart(2, "0")}`;
+  // Advance to Thursday of this ISO week (weeks start Monday; Thursday is day 3 of each week)
+  const thursday = new Date(d);
+  thursday.setDate(d.getDate() - (d.getDay() + 6) % 7 + 3);
+  // Jan 4 is always in week 1 of Thursday's year
+  const jan4 = new Date(thursday.getFullYear(), 0, 4);
+  const weekNum = 1 + Math.round((thursday.getTime() - jan4.getTime()) / 604800000);
+  return `${thursday.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
 }
 
 export function bucketKey(dateStr: string, granularity: Granularity): string {
@@ -46,7 +49,8 @@ export function enumerateBuckets(from: string, to: string, granularity: Granular
   const cursor = new Date(from + "T00:00:00");
   const end = new Date(to + "T00:00:00");
   while (cursor <= end) {
-    const key = bucketKey(cursor.toISOString().slice(0, 10), granularity);
+    const localDate = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
+    const key = bucketKey(localDate, granularity);
     if (!seen.has(key)) {
       seen.add(key);
       buckets.push(key);
