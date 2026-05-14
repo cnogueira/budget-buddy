@@ -47,10 +47,10 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         >
             <div
                 ref={modalRef}
-                className="relative w-full max-w-lg rounded-xl border border-zinc-200 bg-white shadow-2xl animate-in zoom-in-95 duration-200 dark:border-zinc-800 dark:bg-zinc-950"
+                className="relative w-full max-w-lg max-h-[calc(100vh-2rem)] flex flex-col rounded-xl border border-zinc-200 bg-white shadow-2xl animate-in zoom-in-95 duration-200 dark:border-zinc-800 dark:bg-zinc-950"
             >
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
+                <div className="flex shrink-0 items-center justify-between border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
                     <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                         {title}
                     </h3>
@@ -64,7 +64,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
+                <div className="flex-1 overflow-y-auto p-6">
                     {children}
                 </div>
             </div>
